@@ -145,7 +145,7 @@ public class RRFullTeleop extends LinearOpMode {
         double intakeliftDown = -0.4;//for going down
 
         int intakeUpperLimit = 0;//for the robot intake all the way in this is how the game starts
-        int intakeLowerLimit = -2000        //if the lift is the above where is should be
+        int intakeLowerLimit = -1500        //if the lift is the above where is should be
 ;//for the robot intake all the way extended, when picking up particles.
 
 
