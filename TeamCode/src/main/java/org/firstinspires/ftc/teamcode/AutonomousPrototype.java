@@ -42,8 +42,12 @@ public class AutonomousPrototype extends LinearOpMode{
     private static final double roDown = 1 - loDown;
     private static final double roUp = 1 - loUp;
 
+    //mineral arm servos
+    private static final double downPos = 0;
+    private static final double upPos = 0;
+
     //Hardware mapping
-    void mapHardware(){
+    private void mapHardware(){
         //drivetrain
         leftFront  = hardwareMap.get(DcMotor.class, "lf");
         rightFront = hardwareMap.get(DcMotor.class, "rf");
@@ -99,7 +103,7 @@ public class AutonomousPrototype extends LinearOpMode{
         rightBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
     }
 
-    int detectSample(){
+    private int detectSample(){
         int position = 0;
 
         /*if(){
@@ -114,9 +118,9 @@ public class AutonomousPrototype extends LinearOpMode{
     }
 
     //Movement methods
-    void Deploy() {
-        int liftUpperLimit = (3530 - 100);//I just did the math for the values because android studio got mad
-        int liftLowerLimit = (200);//the lift is all the way down, the plus is to compensate for lag.
+    private void Deploy() {
+        int liftUpperLimit = 3889;//I just did the math for the values because android studio got mad
+        int liftLowerLimit = 75;//the lift is all the way down, the plus is to compensate for lag.
 
         telemetry.addLine("Deploying");
         telemetry.update();
@@ -140,7 +144,7 @@ public class AutonomousPrototype extends LinearOpMode{
         rightLift.setPower(0);
     }
 
-    void mineralArm(boolean deployed) {
+    private void mineralArm(boolean deployed) {
         if (deployed) {
             //sampleArm.setPosition();
         } else{
@@ -152,7 +156,7 @@ public class AutonomousPrototype extends LinearOpMode{
         telemetry.update();
     }
 
-    void getShitDone(double one, double two, double three, double four, int time){
+    private void getShitDone(double one, double two, double three, double four, int time){
         rightFront.setPower(one);
         leftFront.setPower(two);
         rightBack.setPower(three);
