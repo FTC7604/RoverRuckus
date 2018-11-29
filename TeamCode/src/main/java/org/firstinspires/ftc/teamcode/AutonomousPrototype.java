@@ -129,9 +129,10 @@ public class AutonomousPrototype extends LinearOpMode{
         rightLift.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
         leftLift.setTargetPosition(liftUpperLimit);
+        rightLift.setTargetPosition(liftUpperLimit);
 
         //lower down then stop
-        while (leftLift.isBusy()){
+        while (leftLift.isBusy() && rightLift.isBusy()){
             leftLift.setPower(1);
             rightLift.setPower(1);
         }
