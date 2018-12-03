@@ -129,8 +129,8 @@ public class RRFullTeleop extends LinearOpMode {
         }
     }
     
-    runIntake(){
-        int intakePosition = intake.getCurrentPosition % (1440/2);
+    private void runIntake(){
+        int intakePosition = intake.getCurrentPosition() % (1440/2);
         if(abs(gamepad2.right_stick_y) > 2){
             intake.setPower(gamepad2.right_stick_y);
         }
