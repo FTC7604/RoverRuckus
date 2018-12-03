@@ -6,7 +6,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-@Autonomous(name = "Deploy Test", group = "Liner Op")
+@Autonomous(name = "Deploy Test 2.0", group = "Liner Op")
 public class AutonomousPrototype extends LinearOpMode{
     //creates the runtime
     private ElapsedTime runtime = new ElapsedTime();

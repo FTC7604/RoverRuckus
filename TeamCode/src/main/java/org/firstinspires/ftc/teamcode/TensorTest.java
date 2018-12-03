@@ -12,7 +12,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer.Came
 import org.firstinspires.ftc.robotcore.external.tfod.TFObjectDetector;
 import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
 
-@Autonomous(name = "Tensor Test", group = "Liner Op")
+@Autonomous(name = "Tensor Test", group = "Linear Op")
 public class TensorTest extends LinearOpMode {
     private ElapsedTime runtime = new ElapsedTime();
     private static int numLoops = 0;
@@ -82,6 +82,12 @@ public class TensorTest extends LinearOpMode {
             if (updatedRecognitions != null) {
                 telemetry.addData("# Object Detected", updatedRecognitions.size());
 
+                /*for(Recognition recognition : updatedRecognitions){
+                    if((int) recognition.getTop() > 0.7){
+                        updatedRecognitions.remove(recognition);
+                    }
+                }*/
+
                 if (updatedRecognitions.size() == 3) {
                     int goldMineralX = -1;
                     int silverMineral1X = -1;
@@ -91,6 +97,7 @@ public class TensorTest extends LinearOpMode {
 
                         if (recognition.getLabel().equals(LABEL_GOLD_MINERAL)) {
                             goldMineralX = (int) recognition.getLeft();
+                            telemetry.addData("Gold Mineral Y Value", (int) recognition.getLeft());
                         } else if (silverMineral1X == -1) {
                             silverMineral1X = (int) recognition.getLeft();
                         } else {
