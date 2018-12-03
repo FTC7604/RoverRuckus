@@ -83,7 +83,7 @@ public class TensorTest extends LinearOpMode {
                 telemetry.addData("# Object Detected", updatedRecognitions.size());
 
                 /*for(Recognition recognition : updatedRecognitions){
-                    if((int) recognition.getTop() > 0.7){
+                    if((int) recognition.getTop() < 0.5){
                         updatedRecognitions.remove(recognition);
                     }
                 }*/
