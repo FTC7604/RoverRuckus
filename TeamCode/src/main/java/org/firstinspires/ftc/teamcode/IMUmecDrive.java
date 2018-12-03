@@ -40,7 +40,7 @@ import com.qualcomm.robotcore.util.ReadWriteFile;
 import org.firstinspires.ftc.robotcore.internal.system.AppUtil;
 import java.io.File;
 
-@TeleOp(name="Mechanum 3.0", group="Linear Opmode")
+@TeleOp(name="Mechanum 4.0", group="Linear Opmode")
 //@Disabled
 public class IMUmecDrive extends LinearOpMode {
 
@@ -91,7 +91,7 @@ public class IMUmecDrive extends LinearOpMode {
         while (opModeIsActive()) {
 
             //imputs from controller
-            double controller_y = pow(-gamepad1.left_stick_y,3);
+            double controller_y = pow(gamepad1.left_stick_y,3);
             double controller_x = pow(-gamepad1.left_stick_x,3);
             double controller_rotation = pow(gamepad1.right_stick_x,3);
             //4. A thought for gryo PID
@@ -117,11 +117,15 @@ public class IMUmecDrive extends LinearOpMode {
             telemetry.addData("controller_y", controller_y);
             telemetry.addData("controller_x", controller_x);
             telemetry.addData("controller_rotation", controller_rotation);
+//            telemetry.addData("bot_rotation_1", robot_rotation[0]);
+//            telemetry.addData("bot_rotation_2", robot_rotation[2]);
+//            telemetry.addData("bot_imput_1", motor_imputs[0]);
+//            telemetry.addData("bot_imput_2", motor_imputs[2]);
             loopCounter++;
             telemetry.addData("Loops per second", ((int)(loopCounter/time)));
             //3. Print out the values to ensure that they make sense
-            telemetry.addData("smooth_position", smoothPosition[0]);
-            telemetry.addData("new_position", newPosition[0]);
+            //telemetry.addData("smooth_position", smoothPosition[0]);
+            //telemetry.addData("new_position", newPosition[0]);
             telemetry.update();
         }
 
@@ -158,6 +162,11 @@ public class IMUmecDrive extends LinearOpMode {
         return smoothData;
     }
 
+    //averages the data
+    double average2Values(double a, double b){
+        return ((a+b)/2);
+    }
+
     //1. Creates class arrays that can be altered induvidually.
     private double [] robot_movement = new double[4];
     private double [] robot_rotation = new double[4];
@@ -178,15 +187,33 @@ public class IMUmecDrive extends LinearOpMode {
 //        else {
 //            x2 = sqrt(pow(x1, 2) + pow(y1, 2)) * (2 * PI - cos(smoothPosition[0] - atan(y1 / x1)));
 //        }
-
-        x2 = sqrt(pow(x1, 2) + pow(y1, 2)) * (cos(smoothPosition[0] - atan(y1 / x1)));
-        y2 = sqrt(pow(x1,2) + pow(y1,2)) * (sin(smoothPosition[0] - atan(y1/x1)));
+        if(x1 != 0) {
+            x2 = sqrt(pow(x1, 2) + pow(y1, 2)) * (cos(smoothPosition[0] - atan(y1 / x1)));
+            y2 = sqrt(pow(x1, 2) + pow(y1, 2)) * (sin(smoothPosition[0] - atan(y1 / x1)));
+        }
+        else{
+            if(y1 > 0){
+                x2 = sqrt(pow(x1, 2) + pow(y1, 2)) * (cos(smoothPosition[0] - PI/2));
+                y2 = sqrt(pow(x1, 2) + pow(y1, 2)) * (sin(smoothPosition[0] - PI/2));
+            }
+            else if(y1 < 0){
+                x2 = sqrt(pow(x1, 2) + pow(y1, 2)) * (cos(smoothPosition[0] - 3*PI/2));
+                y2 = sqrt(pow(x1, 2) + pow(y1, 2)) * (sin(smoothPosition[0] - 3*PI/2));
+            }
+            else{
+                x2 = 0;
+                y2 = 0;
+            }
+        }
 
         //imputs the raw values
         robot_movement[0] = y2 - x2;
         robot_movement[1] = y2 + x2;
         robot_movement[2] = y2 + x2;
         robot_movement[3] = y2 - x2;
+
+        telemetry.addData("robot_x", x2);
+        telemetry.addData("robot_y", y2);
     }
 
     private void getRobot_rotation(double r){
@@ -194,14 +221,16 @@ public class IMUmecDrive extends LinearOpMode {
         robot_rotation[1] = r;
         robot_rotation[2] = -r;
         robot_rotation[3] = -r;
+
+        telemetry.addData("robot_rotation", r);
     }
 
     private void getMotor_imputs(){
 
-        motor_imputs[0] = robot_movement[0] + robot_rotation[0];
-        motor_imputs[1] = robot_movement[1] + robot_rotation[1];
-        motor_imputs[2] = robot_movement[2] + robot_rotation[2];
-        motor_imputs[3] = robot_movement[3] + robot_rotation[3];
+        motor_imputs[0] = robot_rotation[0] + robot_movement[0];
+        motor_imputs[1] = robot_rotation[1] + robot_movement[1];
+        motor_imputs[2] = robot_rotation[2] + robot_movement[2];
+        motor_imputs[3] = robot_rotation[3] + robot_movement[3];
     }
 
     private void imputMecanumMotors(){
@@ -213,6 +242,10 @@ public class IMUmecDrive extends LinearOpMode {
 
     //3. Creates the IMU then its array
     private BNO055IMU imu = null;
+
+    //7. 2 imus
+//    private BNO055IMU left_imu = null;
+//    private BNO055IMU left_imu = null;
 
     //initializes paramateres
     private void startIMU(){
@@ -242,6 +275,11 @@ public class IMUmecDrive extends LinearOpMode {
         newPosition[0] = (imu.getAngularOrientation().firstAngle);//Yaw
         newPosition[1] = (imu.getAngularOrientation().secondAngle);//Roll
         newPosition[2] = (imu.getAngularOrientation().thirdAngle);//Pitch
+
+        //7. 2 imus
+//        newPosition[0] = average2Values(left_imu.getAngularOrientation().firstAngle,right_imu.getAngularOrientation().firstAngle);
+//        newPosition[0] = average2Values(left_imu.getAngularOrientation().secondAngle,right_imu.getAngularOrientation().secondAngle);
+//        newPosition[0] = average2Values(left_imu.getAngularOrientation().thirdAngle,right_imu.getAngularOrientation().thirdAngle);
 
         //The angles are on the circle can't just be averaged, so if the difference, is greater than pi, then it changes the value so it isn't
         for(int axis = 2; axis > -1; axis--){

@@ -6,7 +6,8 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-@Autonomous(name = "Deploy Test", group = "Liner Op")
+@Autonomous(name = "Deploy Test 2.0", group = "Liner Op")
+
 public class AutonomousPrototype extends LinearOpMode{
     //creates the runtime
     private ElapsedTime runtime = new ElapsedTime();
@@ -170,6 +171,14 @@ public class AutonomousPrototype extends LinearOpMode{
         leftFront.setPower(0);
         rightBack.setPower(0);
         leftBack.setPower(0);
+    }
+
+    void driveForward(double power, int time){
+        getShitDone(power,power,power,power,time);
+    }
+
+    void driveStrafe(double power, int time){
+        //getShitDone();
     }
 
     @Override
