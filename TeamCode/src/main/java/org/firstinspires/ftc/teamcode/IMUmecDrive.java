@@ -90,37 +90,8 @@ public class IMUmecDrive extends LinearOpMode {
         //loop that starts the opmode
         while (opModeIsActive()) {
 
-            //imputs from controller
-            double controller_y = pow(gamepad1.left_stick_y,3);
-            double controller_x = pow(-gamepad1.left_stick_x,3);
-            double controller_rotation = pow(gamepad1.right_stick_x,3);
-            //4. A thought for gryo PID
-            // desiredPosition -= gamepad1.right_stick_x;
-            // rotationPower = desiredPosition - smoothPosition[0];
+            imuDrive();
 
-
-            //3.Sets the array for the IMU, then changes the rotation value
-            getPosition(newPosition);
-            smooth(smoothPosition,newPosition,.1);
-
-            //1. Imput Motor function
-            getRobot_movement(controller_x,controller_y);
-            getRobot_rotation(controller_rotation);
-            ////5. Gyro PID
-            //getRobot_rotation(rotationPower);
-            getMotor_imputs();
-            ////5. Gyro PID
-            //getMotor_imputs(robot_movement,rotationPower);
-            imputMecanumMotors();
-
-            //updates the telemetry
-            telemetry.addData("controller_y", controller_y);
-            telemetry.addData("controller_x", controller_x);
-            telemetry.addData("controller_rotation", controller_rotation);
-//            telemetry.addData("bot_rotation_1", robot_rotation[0]);
-//            telemetry.addData("bot_rotation_2", robot_rotation[2]);
-//            telemetry.addData("bot_imput_1", motor_imputs[0]);
-//            telemetry.addData("bot_imput_2", motor_imputs[2]);
             loopCounter++;
             telemetry.addData("Loops per second", ((int)(loopCounter/time)));
             //3. Print out the values to ensure that they make sense
@@ -131,6 +102,42 @@ public class IMUmecDrive extends LinearOpMode {
 
     }
     private int loopCounter;
+
+    //8. Run all the imu code as one method.
+    private void imuDrive(){
+
+        //imputs from controller
+        double controller_y = pow(gamepad1.left_stick_y,3);
+        double controller_x = pow(-gamepad1.left_stick_x,3);
+        double controller_rotation = pow(gamepad1.right_stick_x,3);
+        //4. A thought for gryo PID
+        // desiredPosition -= gamepad1.right_stick_x;
+        // rotationPower = desiredPosition - smoothPosition[0];
+
+
+        //3.Sets the array for the IMU, then changes the rotation value
+        getPosition(newPosition);
+        smooth(smoothPosition,newPosition,.1);
+
+        //1. Imput Motor function
+        getRobot_movement(controller_x,controller_y);
+        getRobot_rotation(controller_rotation);
+        ////5. Gyro PID
+        //getRobot_rotation(rotationPower);
+        getMotor_imputs();
+        ////5. Gyro PID
+        //getMotor_imputs(robot_movement,rotationPower);
+        imputMecanumMotors();
+
+        //updates the telemetry
+        telemetry.addData("controller_y", controller_y);
+        telemetry.addData("controller_x", controller_x);
+        telemetry.addData("controller_rotation", controller_rotation);
+//            telemetry.addData("bot_rotation_1", robot_rotation[0]);
+//            telemetry.addData("bot_rotation_2", robot_rotation[2]);
+//            telemetry.addData("bot_imput_1", motor_imputs[0]);
+//            telemetry.addData("bot_imput_2", motor_imputs[2]);
+    }
 
     //will convert an angle into a value that is greater than or equal to 0 and less than 2pi
     double calcAngle(double angle){
