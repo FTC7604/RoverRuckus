@@ -96,7 +96,7 @@ public class IMUmecDrive extends LinearOpMode {
             double controller_rotation = pow(gamepad1.right_stick_x,3);
             //4. A thought for gryo PID
             // desiredPosition -= gamepad1.right_stick_x;
-            // rotationPower = desiredPosition - smoothPosition;
+            // rotationPower = desiredPosition - smoothPosition[0];
 
 
             //3.Sets the array for the IMU, then changes the rotation value
@@ -245,7 +245,7 @@ public class IMUmecDrive extends LinearOpMode {
 
     //7. 2 imus
 //    private BNO055IMU left_imu = null;
-//    private BNO055IMU left_imu = null;
+//    private BNO055IMU right_imu = null;
 
     //initializes paramateres
     private void startIMU(){
@@ -254,6 +254,17 @@ public class IMUmecDrive extends LinearOpMode {
         parameters.loggingEnabled = true;
         parameters.loggingTag = "IMU";
         imu.initialize(parameters);
+
+        //7. 2 imus
+//        BNO055IMU.Parameters left_parameters = new BNO055IMU.Parameters();
+//        left_parameters.loggingEnabled = true;
+//        left_parameters.loggingTag = "left_imu";
+//        left_imu.initialize(left_parameters);
+//
+//        BNO055IMU.Parameters right_parameters = new BNO055IMU.Parameters();
+//        right_parameters.loggingEnabled = true;
+//        right_parameters.loggingTag = "right_imu";
+//        right_imu.initialize(right_parameters);
     }
 
     //resets those parameters
@@ -263,6 +274,17 @@ public class IMUmecDrive extends LinearOpMode {
         String filename = "AdafruitIMUCalibration.json";
         File file = AppUtil.getInstance().getSettingsFile(filename);
         ReadWriteFile.writeFile(file, calibrationData.serialize());
+
+        //7. 2 imus
+//        BNO055IMU.CalibrationData left_calibration = left_imu.readCalibrationData();
+//        String left_filename = "left_imu.json";
+//        File left_file = AppUtil.getInstance().getSettingsFile(left_filename);
+//        ReadWriteFile.writeFile(left_file, left_calibration.serialize());
+//
+//        BNO055IMU.CalibrationData right_calibration = right_imu.readCalibrationData();
+//        String right_filename = "right_imu.json";
+//        File right_file = AppUtil.getInstance().getSettingsFile(right_filename);
+//        ReadWriteFile.writeFile(right_file, right_calibration.serialize());
     }
 
     private double[]smoothPosition = new double[3];
