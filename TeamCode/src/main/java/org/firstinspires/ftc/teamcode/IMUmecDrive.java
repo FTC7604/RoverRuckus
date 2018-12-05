@@ -69,6 +69,10 @@ public class IMUmecDrive extends LinearOpMode {
         //the imu
         imu = hardwareMap.get(BNO055IMU.class, "imu");
 
+        //7. 2 imus
+//        imu = hardwareMap.get(BNO055IMU.class, "li");
+//        imu = hardwareMap.get(BNO055IMU.class, "ri");
+
         //reverses the left motors, so that they can be programed the same
         leftFront.setDirection(DcMotor.Direction.REVERSE);
         rightFront.setDirection(DcMotor.Direction.FORWARD);
@@ -156,22 +160,14 @@ public class IMUmecDrive extends LinearOpMode {
     //smooths data
     double[] smooth(double[] smoothData, double[] newData, double fraction){
 
-        //smooths the values
-        smoothData[0] = ((1-fraction) * smoothData[0]) + (fraction * newData[0]);//Yaw
-        smoothData[1] = ((1-fraction) * smoothData[1]) + (fraction * newData[1]);//Roll
-        smoothData[2] = ((1-fraction) * smoothData[2]) + (fraction * newData[2]);//Pitch
-
-        //prevents it from spiraling around becuase of the new thing
-        smoothData[0] = calcAngle(smoothData[0]);
-        smoothData[1] = calcAngle(smoothData[1]);
-        smoothData[2] = calcAngle(smoothData[2]);
+        for(int axis = 2; axis > -1; axis--){
+            //smooths the data
+            smoothData[axis] = ((1-fraction) * smoothData[axis]) + (fraction * newData[axis]);
+            //prevents the data from remaining within the bounds
+            smoothData[0] = calcAngle(smoothData[0]);
+        }
 
         return smoothData;
-    }
-
-    //averages the data
-    double average2Values(double a, double b){
-        return ((a+b)/2);
     }
 
     //1. Creates class arrays that can be altered induvidually.
@@ -213,7 +209,7 @@ public class IMUmecDrive extends LinearOpMode {
             }
         }
 
-        //imputs the raw values
+        //adds the raw values
         robot_movement[0] = y2 - x2;
         robot_movement[1] = y2 + x2;
         robot_movement[2] = y2 + x2;
@@ -306,12 +302,12 @@ public class IMUmecDrive extends LinearOpMode {
         newPosition[2] = (imu.getAngularOrientation().thirdAngle);//Pitch
 
         //7. 2 imus
-//        newPosition[0] = average2Values(left_imu.getAngularOrientation().firstAngle,right_imu.getAngularOrientation().firstAngle);
-//        newPosition[0] = average2Values(left_imu.getAngularOrientation().secondAngle,right_imu.getAngularOrientation().secondAngle);
-//        newPosition[0] = average2Values(left_imu.getAngularOrientation().thirdAngle,right_imu.getAngularOrientation().thirdAngle);
+//        newPosition[0] = (left_imu.getAngularOrientation().firstAngle + right_imu.getAngularOrientation().firstAngle)/2;
+//        newPosition[1] = (left_imu.getAngularOrientation().secondAngle + right_imu.getAngularOrientation().secondAngle)/2;
+//        newPosition[2] = (left_imu.getAngularOrientation().thirdAngle + right_imu.getAngularOrientation().thirdAngle)/2;
 
         //The angles are on the circle can't just be averaged, so if the difference, is greater than pi, then it changes the value so it isn't
-        for(int axis = 2; axis > -1; axis--){
+        for(int axis = 2; axis > 0-1; axis--){
             if (newPosition[axis] - smoothPosition[axis] > PI) newPosition[axis] -= 2 * PI;
             if (smoothPosition[axis] - newPosition[axis] > PI) newPosition[axis] += 2 * PI;
         }
