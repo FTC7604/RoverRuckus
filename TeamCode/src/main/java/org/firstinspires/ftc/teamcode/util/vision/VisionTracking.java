@@ -29,7 +29,7 @@ import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocaliz
 
 public class VisionTracking
 {
-    private static final String VUFORIA_KEY = " -- YOUR NEW VUFORIA KEY GOES HERE  --- ";
+    private static final String VUFORIA_KEY = "ASv2MNj/////AAAAGQukwPKRd0YcsSlpoJYzs9EdjNGpnGv0mY+oWYr923xV6ZP+Tm9A7ZjZvdw7KY3iqJ/2AXpNLeHZLylMumJd46ZYL4zpkdjPY6OwGwUmQBrgo6MXWgIM6bKgp/0M1SJnb8yYpFjzTAqAXtXqotY5KPiLkelgBeCuPYc+NUAlf6vSxjEr7+Zezid1O2zV3dRV/FlaBJN9MQsgWOvPQfsTiKqgpEr2b4pLG8PMqL/HU3RvuEexsWSv5eN6mWtx8Vt7m+GSBC6xo9vxR+gaTLsi19RAXTPCq4UhoQvrFYIORotVeVa5zIhZXlpMc09NZT25e6DcOPTv2eloL55O2/FK81AGay8e4urLNQ5wF3vknehR";
 
     private static final float mmPerInch = 25.4f;
     private static final float mmFTCFieldWidth = (12 * 6) * mmPerInch;
@@ -217,10 +217,6 @@ public class VisionTracking
         {
             if (((VuforiaTrackableDefaultListener) trackable.getListener()).isVisible())
             {
-                VisionTarget info = new VisionTarget() {{
-                   name = trackable.getName();
-                }};
-
                 // getUpdatedRobotLocation() will return null if no new information is available since
                 // the last time that call was made, or if the trackable is not currently visible.
                 OpenGLMatrix robotLocationTransform = ((VuforiaTrackableDefaultListener) trackable.getListener()).getUpdatedRobotLocation();
@@ -230,13 +226,25 @@ public class VisionTracking
                 }
 
                 // express position (translation) of robot in inches.
-                VectorF translation = lastLocation.getTranslation();
+                final VectorF trackableTranslation = lastLocation.getTranslation();
 //                telemetry.addData("Pos (in)", "{X, Y, Z} = %.1f, %.1f, %.1f",
 //                        translation.get(0) / mmPerInch, translation.get(1) / mmPerInch, translation.get(2) / mmPerInch);
 
                 // express the rotation of the robot in degrees.
-                Orientation rotation = Orientation.getOrientation(lastLocation, EXTRINSIC, XYZ, DEGREES);
+                final Orientation trackableRotation = Orientation.getOrientation(lastLocation, EXTRINSIC, XYZ, DEGREES);
 //                telemetry.addData("Rot (deg)", "{Roll, Pitch, Heading} = %.0f, %.0f, %.0f", rotation.firstAngle, rotation.secondAngle, rotation.thirdAngle);
+
+                VisionTarget info = new VisionTarget() {{
+                    name = trackable.getName();
+                    translation = trackableTranslation;
+                    translationX = translation.get(0);
+                    translationY = translation.get(1);
+                    translationZ = translation.get(2);
+                    rotation = trackableRotation;
+                    yaw = rotation.firstAngle;
+                    pitch = rotation.secondAngle;
+                    roll = rotation.thirdAngle;
+                }};
             }
         }
     }

@@ -40,7 +40,7 @@ import com.qualcomm.robotcore.util.ReadWriteFile;
 import org.firstinspires.ftc.robotcore.internal.system.AppUtil;
 import java.io.File;
 
-@TeleOp(name="Mechanum 3.0", group="Linear Opmode")
+@TeleOp(name="IMU Mechanum 3.0", group="Linear Opmode")
 //@Disabled
 public class IMUmecDrive extends LinearOpMode {
 

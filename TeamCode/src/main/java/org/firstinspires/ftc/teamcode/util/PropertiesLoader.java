@@ -2,48 +2,48 @@ package org.firstinspires.ftc.teamcode.util;
 
 import android.content.Context;
 import android.content.res.Resources;
+import android.os.Environment;
 
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
 public class PropertiesLoader
 {
-    private Context context;
-    private int resource;
+    private Properties properties;
 
-    public PropertiesLoader(Context context, int resource)
+    public PropertiesLoader(String fileName)
     {
-        this.context = context;
-        this.resource = resource;
-    }
-
-    public PropertiesLoader(HardwareMap map, int resource)
-    {
-        this(map.appContext, resource);
-    }
-
-    public PropertiesLoader(OpMode op, int resource)
-    {
-        this(op.hardwareMap, resource);
-    }
-
-    public String getConfigValue(String name)
-    {
-        Resources resources = context.getResources();
-
+        File sdcard = Environment.getExternalStorageDirectory();
+        File config = new File(sdcard, "DWAIConfig/" + fileName + ".properties");
+        properties = new Properties();
         try
         {
-            InputStream rawResource = resources.openRawResource(resource);
-            Properties properties = new Properties();
-            properties.load(rawResource);
-            return properties.getProperty(name);
-        } catch (Resources.NotFoundException | IOException e)
+            properties.load(new FileInputStream(config));
+        } catch (IOException e)
         {
             throw new RuntimeException(e);
         }
+    }
+
+
+    public float getFloatProperty(String name)
+    {
+        return Float.parseFloat(getStringProperty(name));
+    }
+
+    public double getDoubleProperty(String name)
+    {
+        return Double.parseDouble(getStringProperty(name));
+    }
+
+    public String getStringProperty(String name)
+    {
+        return properties.getProperty(name);
     }
 }

@@ -34,18 +34,18 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
-import com.qualcomm.robotcore.hardware.TouchSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
+
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 
 import static java.lang.Math.abs;
 
-@TeleOp(name="RR Full Teleop", group="Linear Opmode")
+@TeleOp(name="RR Reset Encoders", group="Linear Opmode")
 //@Disabled
 
 
-public class RRFullTeleop extends LinearOpMode {
+public class RREncoderReset extends LinearOpMode {
 
     private ElapsedTime runtime = new ElapsedTime();
 
@@ -105,28 +105,8 @@ public class RRFullTeleop extends LinearOpMode {
         waitForStart();
         runtime.reset();
 
-
-        while (opModeIsActive()) {
-
-            intake.setPower(gamepad2.right_stick_y);
-
-            RunIntakeLift();
-
-            RunLift();
-
-            RunDrive();
-
-            HoldPhoneAndSample();
-
-            RunScoringBucket();
-
-            RunHook();
-
-            telemetry.addData("intake lift", intakeLift.getCurrentPosition());
-            telemetry.addData("Encoder Position", leftLift.getCurrentPosition());
-            telemetry.update();
+        telemetry.addLine("Encoders Reset");
         }
-    }
 
     //toggles between engaged and disengaged position
     private void togglePosition(Servo servo, double disengagedPosition, double engagedPosition, boolean button){
@@ -145,7 +125,7 @@ public class RRFullTeleop extends LinearOpMode {
         double intakeliftDown = -0.4;//for going down
 
         int intakeUpperLimit = 0;//for the robot intake all the way in this is how the game starts
-        int intakeLowerLimit = -1500;       //if the lift is the above where is should be
+        int intakeLowerLimit = -2000;       //if the lift is the above where is should be
 //for the robot intake all the way extended, when picking up particles.
 
 
@@ -169,7 +149,7 @@ public class RRFullTeleop extends LinearOpMode {
     }
 
     private void RunLift () {
-        int liftUpperLimit = (3889);//I just did the math for the values because android studio got mad
+        int liftUpperLimit = (4030 - 150);//I just did the math for the values because android studio got mad
         int liftLowerLimit = (0 + 75);//the lift is all the way down, the plus is to compensate for lag.
 
         //Lifter controls, Negative is up, positive is down Hang is the other way around
@@ -243,7 +223,7 @@ public class RRFullTeleop extends LinearOpMode {
         double roDown = 1- loDown;
         double roUp = 1-loUp;
 
-        double liftHalfway = 3000;
+        double liftHalfway = 2500;
 
         //controls of the bucket with gamapad1.a and makes sure that the user can't break the bot. It holds at a diagonal position when it can so that it keeps the particles
         if ((gamepad2.a == false) && leftLift.getCurrentPosition() > liftHalfway){
@@ -277,12 +257,16 @@ public class RRFullTeleop extends LinearOpMode {
 
     }
 
-    private void setMotorBehaviors () {
+    void setMotorBehaviors () {
         leftLift.setDirection(DcMotor.Direction.FORWARD);
         rightLift.setDirection(DcMotor.Direction.REVERSE);
 
         intake.setDirection(DcMotor.Direction.FORWARD);
         intakeLift.setDirection(DcMotor.Direction.FORWARD);
+
+        intakeLift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        leftLift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightLift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         intakeLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         leftLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
