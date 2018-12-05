@@ -70,6 +70,7 @@ public class IMUmecDrive extends LinearOpMode {
         imu = hardwareMap.get(BNO055IMU.class, "imu");
 
         //7. 2 imus
+        //I think that I might want to change it to i1 and i2, beucase left and right doesn't really matter
 //        imu = hardwareMap.get(BNO055IMU.class, "li");
 //        imu = hardwareMap.get(BNO055IMU.class, "ri");
 
@@ -83,7 +84,7 @@ public class IMUmecDrive extends LinearOpMode {
         waitForStart();
         runtime.reset();
 
-        //3. Sets up the IMU
+        //Sets up the IMU
         startIMU();
         calibrateIMU();
 
@@ -94,57 +95,44 @@ public class IMUmecDrive extends LinearOpMode {
         //loop that starts the opmode
         while (opModeIsActive()) {
 
-            imuDrive();
+            imuDrive(pow(gamepad1.left_stick_y,3),pow(-gamepad1.left_stick_x,3),pow(gamepad1.right_stick_x,3),true);
 
             loopCounter++;
             telemetry.addData("Loops per second", ((int)(loopCounter/time)));
-            //3. Print out the values to ensure that they make sense
-            //telemetry.addData("smooth_position", smoothPosition[0]);
-            //telemetry.addData("new_position", newPosition[0]);
             telemetry.update();
         }
 
     }
     private int loopCounter;
 
-    //8. Run all the imu code as one method.
-    private void imuDrive(){
+    private void imuTurn(double angle){
+        double netAngle = angle - smoothPosition[0];
+        double variablility = 0.2;
 
-        //imputs from controller
-        double controller_y = pow(gamepad1.left_stick_y,3);
-        double controller_x = pow(-gamepad1.left_stick_x,3);
-        double controller_rotation = pow(gamepad1.right_stick_x,3);
-        //4. A thought for gryo PID
-        // desiredPosition -= gamepad1.right_stick_x;
-        // rotationPower = desiredPosition - smoothPosition[0];
+        while(netAngle < smoothPosition[0] - variablility && netAngle > smoothPosition[0] + variablility) {
+            imuDrive(0, 0, netAngle - smoothPosition[0], false);
+        }
+    }
 
+    //y is the y-position that the bot must move, ditto for x, r is the desired rotation
+    //c is is wether or not the drive is field centric
+    private void imuDrive(double y, double x, double r, boolean c){
 
         //3.Sets the array for the IMU, then changes the rotation value
-        getPosition(newPosition);
-        smooth(smoothPosition,newPosition,.1);
+        getPosition();
+        smooth(smoothPosition,newPosition,.2);
 
-        //1. Imput Motor function
-        getRobot_movement(controller_x,controller_y);
-        getRobot_rotation(controller_rotation);
-        ////5. Gyro PID
-        //getRobot_rotation(rotationPower);
-        getMotor_imputs();
-        ////5. Gyro PID
-        //getMotor_imputs(robot_movement,rotationPower);
+        //gets the movement and rotation respectively
+        getRobot_movement(x,y,c);
+        getRobot_rotation(r);
+
+        //sends those values to the motor
         imputMecanumMotors();
 
-        //updates the telemetry
-        telemetry.addData("controller_y", controller_y);
-        telemetry.addData("controller_x", controller_x);
-        telemetry.addData("controller_rotation", controller_rotation);
-//            telemetry.addData("bot_rotation_1", robot_rotation[0]);
-//            telemetry.addData("bot_rotation_2", robot_rotation[2]);
-//            telemetry.addData("bot_imput_1", motor_imputs[0]);
-//            telemetry.addData("bot_imput_2", motor_imputs[2]);
     }
 
     //will convert an angle into a value that is greater than or equal to 0 and less than 2pi
-    double calcAngle(double angle){
+    private double calcAngle(double angle){
         //a is the angle
         //greater than or equal to 0
         while(angle < 0){
@@ -158,7 +146,7 @@ public class IMUmecDrive extends LinearOpMode {
     }
 
     //smooths data
-    double[] smooth(double[] smoothData, double[] newData, double fraction){
+    private double[] smooth(double[] smoothData, double[] newData, double fraction){
 
         for(int axis = 2; axis > -1; axis--){
             //smooths the data
@@ -173,40 +161,35 @@ public class IMUmecDrive extends LinearOpMode {
     //1. Creates class arrays that can be altered induvidually.
     private double [] robot_movement = new double[4];
     private double [] robot_rotation = new double[4];
-    private double [] motor_imputs = new double[4];
     //0 is left front
     //1 is left back
     //2 is right front
     //3 is right back
 
-    private void getRobot_movement(double x1, double y1){
-        double x2 = 0;
-        double y2 = 0;
+    private void getRobot_movement(double x1, double y1,boolean c){
+        double x2;
+        double y2;
 
-//        //6. In order for the code to work, the angles must be worked out properly.
-//        if(x1 * y1 > 0) {
-//            x2 = sqrt(pow(x1, 2) + pow(y1, 2)) * (cos(smoothPosition[0] - atan(y1 / x1)));
-//        }
-//        else {
-//            x2 = sqrt(pow(x1, 2) + pow(y1, 2)) * (2 * PI - cos(smoothPosition[0] - atan(y1 / x1)));
-//        }
-        if(x1 != 0) {
-            x2 = sqrt(pow(x1, 2) + pow(y1, 2)) * (cos(smoothPosition[0] - atan(y1 / x1)));
-            y2 = sqrt(pow(x1, 2) + pow(y1, 2)) * (sin(smoothPosition[0] - atan(y1 / x1)));
+        if(c) {
+            if (x1 != 0) {
+                x2 = sqrt(pow(x1, 2) + pow(y1, 2)) * (cos(smoothPosition[0] - atan(y1 / x1)));
+                y2 = sqrt(pow(x1, 2) + pow(y1, 2)) * (sin(smoothPosition[0] - atan(y1 / x1)));
+            } else {
+                if (y1 > 0) {
+                    x2 = sqrt(pow(x1, 2) + pow(y1, 2)) * (cos(smoothPosition[0] - PI / 2));
+                    y2 = sqrt(pow(x1, 2) + pow(y1, 2)) * (sin(smoothPosition[0] - PI / 2));
+                } else if (y1 < 0) {
+                    x2 = sqrt(pow(x1, 2) + pow(y1, 2)) * (cos(smoothPosition[0] - 3 * PI / 2));
+                    y2 = sqrt(pow(x1, 2) + pow(y1, 2)) * (sin(smoothPosition[0] - 3 * PI / 2));
+                } else {
+                    x2 = 0;
+                    y2 = 0;
+                }
+            }
         }
         else{
-            if(y1 > 0){
-                x2 = sqrt(pow(x1, 2) + pow(y1, 2)) * (cos(smoothPosition[0] - PI/2));
-                y2 = sqrt(pow(x1, 2) + pow(y1, 2)) * (sin(smoothPosition[0] - PI/2));
-            }
-            else if(y1 < 0){
-                x2 = sqrt(pow(x1, 2) + pow(y1, 2)) * (cos(smoothPosition[0] - 3*PI/2));
-                y2 = sqrt(pow(x1, 2) + pow(y1, 2)) * (sin(smoothPosition[0] - 3*PI/2));
-            }
-            else{
-                x2 = 0;
-                y2 = 0;
-            }
+            x2 = 0;
+            y2 = 0;
         }
 
         //adds the raw values
@@ -228,19 +211,11 @@ public class IMUmecDrive extends LinearOpMode {
         telemetry.addData("robot_rotation", r);
     }
 
-    private void getMotor_imputs(){
-
-        motor_imputs[0] = robot_rotation[0] + robot_movement[0];
-        motor_imputs[1] = robot_rotation[1] + robot_movement[1];
-        motor_imputs[2] = robot_rotation[2] + robot_movement[2];
-        motor_imputs[3] = robot_rotation[3] + robot_movement[3];
-    }
-
     private void imputMecanumMotors(){
-        leftFront.setPower(motor_imputs[0]);
-        leftBack.setPower(motor_imputs[1]);
-        rightFront.setPower(motor_imputs[2]);
-        rightBack.setPower(motor_imputs[3]);
+        leftFront.setPower(robot_rotation[0] + robot_movement[0]);
+        leftBack.setPower(robot_rotation[1] + robot_movement[1]);
+        rightFront.setPower(robot_rotation[2] + robot_movement[2]);
+        rightBack.setPower(robot_rotation[3] + robot_movement[3]);
     }
 
     //3. Creates the IMU then its array
@@ -294,7 +269,7 @@ public class IMUmecDrive extends LinearOpMode {
     private double[]newPosition = new double[3];
 
     //creates the new position for the new value
-    private double[] getPosition(double[]newPosition){
+    private void getPosition(){
 
         //gets the raw values.
         newPosition[0] = (imu.getAngularOrientation().firstAngle);//Yaw
@@ -312,6 +287,7 @@ public class IMUmecDrive extends LinearOpMode {
             if (smoothPosition[axis] - newPosition[axis] > PI) newPosition[axis] += 2 * PI;
         }
 
-        return newPosition;
+        telemetry.addData("smooth_position", smoothPosition[0]);
+        telemetry.addData("new_position", newPosition[0]);
     }
 }
