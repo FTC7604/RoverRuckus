@@ -12,8 +12,8 @@ import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer.Came
 import org.firstinspires.ftc.robotcore.external.tfod.TFObjectDetector;
 import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
 
-@Autonomous(name = "Tensor Test", group = "Linear Op")
-public class TensorTest extends LinearOpMode {
+@Autonomous(name = "Tensor Test & Dynamic List", group = "Linear Op")
+public class tensorDynamicArray extends LinearOpMode {
     private ElapsedTime runtime = new ElapsedTime();
     private static int numLoops = 0;
     private static int size = 0;
@@ -61,7 +61,6 @@ public class TensorTest extends LinearOpMode {
                 break;
         }
         telemetry.addData("Mineral position", mineralPositionString);
-        telemetry.addData("Mineral position", mineralPosition);
         telemetry.addData("Time", runtime.seconds());
         telemetry.addData("Loops", numLoops);
         telemetry.update();
@@ -92,6 +91,18 @@ public class TensorTest extends LinearOpMode {
         tfod.loadModelFromAsset(TFOD_MODEL_ASSET, LABEL_GOLD_MINERAL, LABEL_SILVER_MINERAL);
     }
 
+    private void sortArray(List<Recognition> arrayList){
+        int size = arrayList.size();
+
+        for(int i = 1; i < size; i++){
+            for(int j = size - 1; j >= i; j--){
+                if(arrayList.get(j - 1).getTop() < arrayList.get(j).getTop()){
+                    arrayList.set(j, arrayList.set(j - 1, arrayList.get(j)));
+                }
+            }
+        }
+    }
+
     private int flowTensor(){
         int mineralPosition = 0;
         int goldMineralX = -1;
@@ -100,26 +111,43 @@ public class TensorTest extends LinearOpMode {
 
         if (tfod != null) {
             List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
-            List<Recognition> validRecognitions = new ArrayList<>();
+            List<Recognition> silverMinerals = new ArrayList<>();
+            List<Recognition> goldMinerals = new ArrayList<>();
 
             if (updatedRecognitions != null) {
-                telemetry.addData("# Object Detected", updatedRecognitions.size());
+                telemetry.addData("# Objects Detected", updatedRecognitions.size());
 
                 for(Recognition recognition : updatedRecognitions){
-                    while(validRecognitions.size() < 3) {
-                        size++;
-
-                        if((int) recognition.getTop() > size) {
-                            validRecognitions.add(recognition);
-                            telemetry.addLine("Added valid recognition " + recognition.getLabel());
-                            telemetry.addData(recognition.getLabel() + " Y Value", (int) recognition.getTop());
-                        }
+                    if(recognition.getLabel().equals(LABEL_GOLD_MINERAL)) {
+                        goldMinerals.add(recognition);
+                        telemetry.addLine("Added valid recognition " + recognition.getLabel());
+                        telemetry.addData(recognition.getLabel() + " Y Value", (int) recognition.getTop());
+                    } else{
+                        silverMinerals.add(recognition);
+                        telemetry.addLine("Added valid recognition " + recognition.getLabel());
+                        telemetry.addData(recognition.getLabel() + " Y Value", (int) recognition.getTop());
                     }
                 }
 
-                if (validRecognitions.size() == 3) {
+                sortArray(silverMinerals);
+                sortArray(goldMinerals);
 
-                    for (Recognition recognition : validRecognitions) {
+                for(int i = 2; i < silverMinerals.size(); i++){
+                    silverMinerals.remove(2);
+                }
+
+                for(int i = 1; i < goldMinerals.size(); i++){
+                    goldMinerals.remove(1);
+                }
+
+                updatedRecognitions.clear();
+                updatedRecognitions.add(goldMinerals.get(0));
+                updatedRecognitions.add(silverMinerals.get(1));
+                updatedRecognitions.add(silverMinerals.get(2));
+
+                if (updatedRecognitions.size() == 3) {
+
+                    for (Recognition recognition : updatedRecognitions) {
 
                         if (recognition.getLabel().equals(LABEL_GOLD_MINERAL)) {
                             goldMineralX = (int) recognition.getLeft();
