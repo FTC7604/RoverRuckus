@@ -12,17 +12,20 @@ import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer.Came
 import org.firstinspires.ftc.robotcore.external.tfod.TFObjectDetector;
 import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
 
+//I know this code is exceedingly messy but it's mainly to test rn so shutup loser
+
 @Autonomous(name = "Tensor Test & Dynamic List", group = "Linear Op")
 public class tensorDynamicArray extends LinearOpMode {
     private ElapsedTime runtime = new ElapsedTime();
     private static int numLoops = 0;
-    private static int size = 0;
 
-    @Override
-    public void runOpMode() {
+    private int initTensor(){
         int mineralPosition = 0;
-        String mineralPositionString;
-        initVuforia();
+
+        VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters();
+        parameters.vuforiaLicenseKey = VUFORIA_KEY;
+        parameters.cameraDirection = CameraDirection.BACK;
+        vuforia = ClassFactory.getInstance().createVuforia(parameters);
 
         if (ClassFactory.getInstance().canCreateTFObjectDetector()) {
             initTfod();
@@ -31,19 +34,26 @@ public class tensorDynamicArray extends LinearOpMode {
         }
 
         waitForStart();
-        runtime.reset();
 
         if (tfod != null) {
             tfod.activate();
         }
 
-        while (opModeIsActive() && mineralPosition == 0 || runtime.seconds() < 3) {
+        runtime.reset();
+
+        while (opModeIsActive() && runtime.seconds() < 3) {
             mineralPosition = flowTensor();
         }
 
         if (tfod != null) {
             tfod.shutdown();
         }
+
+        return mineralPosition;
+    }
+
+    private void printPosition(int mineralPosition){
+        String mineralPositionString;
 
         telemetry.clearAll();
         switch(mineralPosition){
@@ -64,7 +74,12 @@ public class tensorDynamicArray extends LinearOpMode {
         telemetry.addData("Time", runtime.seconds());
         telemetry.addData("Loops", numLoops);
         telemetry.update();
+    }
 
+    @Override
+    public void runOpMode() {
+        int mineralPosition = initTensor();
+        printPosition(mineralPosition);
         sleep(3000);
     }
 
@@ -75,13 +90,6 @@ public class tensorDynamicArray extends LinearOpMode {
     private static final String VUFORIA_KEY = "Adw59PP/////AAABmSngvZTKXktpu+nuzpPLAFUc6w406s2RYiPPvJaY9A1k2/zyXeM83mHvqT14sWp9QlghcCK1akohLb6SHQv4cXvD8AbeO1a9sRhhchx1X5eL6ttrRE5PH6g517XhKI0dvKsoeYhZu6k4ln6dacQOC11xv/AHSEi/VipxqOMXlNesBfv/jmCc48H6LTFTOHLVDEb9vkk7btw6StRcwle0PUdbCh5aPIkRI2pTh+0R1hY5FyGGrdyZltrBoUusodgwQW0sIai/V21YZGgKaN5QYZLOhO3Fv0ZhjWsnj52e/BivDb3RJyPF1loygTBADo6YZoki1S/oDzoqcP3VmjIaEIFr6RfIGrnVZtkVbjWZP+Zs";
     private VuforiaLocalizer vuforia;
     private TFObjectDetector tfod;
-
-    private void initVuforia() {
-        VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters();
-        parameters.vuforiaLicenseKey = VUFORIA_KEY;
-        parameters.cameraDirection = CameraDirection.BACK;
-        vuforia = ClassFactory.getInstance().createVuforia(parameters);
-    }
 
     private void initTfod() {
         int tfodMonitorViewId = hardwareMap.appContext.getResources().getIdentifier(
