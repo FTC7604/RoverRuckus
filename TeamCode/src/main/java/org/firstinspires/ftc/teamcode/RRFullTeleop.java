@@ -41,7 +41,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import static java.lang.Math.abs;
 
-@TeleOp(name="RR Full Teleop", group="Linear Opmode")
+/*@TeleOp(name="RR Full Teleop", group="Linear Opmode")
 //@Disabled
 
 
@@ -304,3 +304,4 @@ public class RRFullTeleop extends LinearOpMode {
         rightBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
     }
 }
+*/

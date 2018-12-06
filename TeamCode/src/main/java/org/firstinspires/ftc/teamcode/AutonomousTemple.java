@@ -38,7 +38,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 //starts the autonomous
-@Autonomous(name="Deploy Test", group="Linear Opmode")
+/*@Autonomous(name="Deploy Test", group="Linear Opmode")
 //@Disabled
 public class AutonomousTemple extends LinearOpMode {
     //creates the runtime
@@ -166,6 +166,4 @@ public class AutonomousTemple extends LinearOpMode {
 //            case 1: go back
 //        }
 //    }
-}
-
-    
+}*/

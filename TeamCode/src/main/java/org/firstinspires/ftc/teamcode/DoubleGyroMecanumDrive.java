@@ -27,7 +27,7 @@ import org.firstinspires.ftc.robotcore.internal.system.AppUtil;
 import java.io.File;
 import java.util.Locale;
 
-@TeleOp(name = "Double Mecanum", group = "Linear Opmode")
+/*@TeleOp(name = "Double Mecanum", group = "Linear Opmode")
 //@Disabled
 public class DoubleGyroMecanumDrive extends LinearOpMode{
     //class Variables
@@ -232,4 +232,4 @@ public class DoubleGyroMecanumDrive extends LinearOpMode{
             telemetry.update();
         }
     }
-}
+}*/

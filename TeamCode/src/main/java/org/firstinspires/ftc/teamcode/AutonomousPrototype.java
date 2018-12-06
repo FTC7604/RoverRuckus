@@ -6,7 +6,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-@Autonomous(name = "Deploy Test 2.0", group = "Liner Op")
+/*@Autonomous(name = "Deploy Test 2.0", group = "Liner Op")
 public class AutonomousPrototype extends LinearOpMode{
     //creates the runtime
     private ElapsedTime runtime = new ElapsedTime();
@@ -106,13 +106,13 @@ public class AutonomousPrototype extends LinearOpMode{
     private int detectSample(){
         int position = 0;
 
-        /*if(){
+        if(){
            return 1;
         } else if(){
             return 3;
         } else{
             return 2;
-        }*/
+        }
 
         return position;
     }
@@ -216,4 +216,4 @@ public class AutonomousPrototype extends LinearOpMode{
 
         sleep(1000);
     }
-}
+}*/

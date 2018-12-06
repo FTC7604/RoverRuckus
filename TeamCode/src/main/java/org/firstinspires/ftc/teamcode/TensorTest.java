@@ -2,9 +2,9 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.util.ElapsedTime;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+
+import java.util.ArrayList;
 import java.util.List;
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
@@ -16,6 +16,7 @@ import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
 public class TensorTest extends LinearOpMode {
     private ElapsedTime runtime = new ElapsedTime();
     private static int numLoops = 0;
+    private static int size = 0;
 
     @Override
     public void runOpMode() {
@@ -35,8 +36,8 @@ public class TensorTest extends LinearOpMode {
             tfod.activate();
         }
 
-        while ((opModeIsActive() && mineralPosition == 0) || runtime.seconds() < 3) {
-            mineralPosition = finnaTry();
+        while (opModeIsActive() && mineralPosition == 0 || runtime.seconds() < 3) {
+            mineralPosition = flowTensor();
         }
 
         if (tfod != null) {
@@ -48,6 +49,8 @@ public class TensorTest extends LinearOpMode {
         telemetry.addData("Time", runtime.seconds());
         telemetry.addData("Loops", numLoops);
         telemetry.update();
+
+        sleep(3000);
     }
 
     //Dirty Vuforia things
@@ -73,35 +76,39 @@ public class TensorTest extends LinearOpMode {
         tfod.loadModelFromAsset(TFOD_MODEL_ASSET, LABEL_GOLD_MINERAL, LABEL_SILVER_MINERAL);
     }
 
-    private int finnaTry(){
+    private int flowTensor(){
         int mineralPosition = 0;
+        int goldMineralX = -1;
+        int silverMineral1X = -1;
+        int silverMineral2X = -1;
 
         if (tfod != null) {
             List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
+            List<Recognition> validRecognitions = new ArrayList<>();
 
             if (updatedRecognitions != null) {
                 telemetry.addData("# Object Detected", updatedRecognitions.size());
 
-                /*for(Recognition recognition : updatedRecognitions){
-                    if((int) recognition.getTop() < 0.5){
-                        updatedRecognitions.remove(recognition);
+                for(Recognition recognition : updatedRecognitions){
+                    if((int) recognition.getTop() > size){
+                        validRecognitions.add(recognition);
+                        telemetry.addLine("Added valid recognition " + recognition.getLabel());
                     }
-                }*/
+                }
 
-                if (updatedRecognitions.size() == 3) {
-                    int goldMineralX = -1;
-                    int silverMineral1X = -1;
-                    int silverMineral2X = -1;
+                if (validRecognitions.size() == 3) {
 
-                    for (Recognition recognition : updatedRecognitions) {
+                    for (Recognition recognition : validRecognitions) {
 
                         if (recognition.getLabel().equals(LABEL_GOLD_MINERAL)) {
                             goldMineralX = (int) recognition.getLeft();
-                            telemetry.addData("Gold Mineral Y Value", (int) recognition.getLeft());
+                            telemetry.addData("Gold Mineral Y Value", (int) recognition.getTop());
                         } else if (silverMineral1X == -1) {
                             silverMineral1X = (int) recognition.getLeft();
+                            telemetry.addData("Silver Mineral Y Value", (int) recognition.getTop());
                         } else {
                             silverMineral2X = (int) recognition.getLeft();
+                            telemetry.addData("Silver Mineral Y Value", (int) recognition.getTop());
                         }
 
                     }
@@ -121,6 +128,8 @@ public class TensorTest extends LinearOpMode {
 
                     }
 
+                } else if(validRecognitions.size() < 3){
+                    size++;
                 }
 
                 telemetry.update();
@@ -129,6 +138,7 @@ public class TensorTest extends LinearOpMode {
         }
 
         numLoops++;
+        telemetry.clearAll();
         return mineralPosition;
     }
 }
