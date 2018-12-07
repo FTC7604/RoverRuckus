@@ -88,7 +88,7 @@ public class IMUmecDrive extends LinearOpMode {
         runtime.reset();
 
         //Sets up the IMU
-        IMUControl.startIMU(imu1,imu2);
+        IMUControl.createIMU(imu1,imu2);
         IMUControl.calibrateIMU(imu1,imu2);
 
         double[]controller = new double[3];
@@ -98,12 +98,12 @@ public class IMUmecDrive extends LinearOpMode {
         //loop that starts the opmode
         while (opModeIsActive()) {
 
-            controller[0] = pow(gamepad1.left_stick_x,3); //desired x movement
-            controller[1] = pow(gamepad1.left_stick_y,3); //desired y movement
+            controller[0] = pow(-gamepad1.left_stick_x,3); //desired x movement
+            controller[1] = pow(-gamepad1.left_stick_y,3); //desired y movement
             controller[2] = pow(gamepad1.right_stick_x,3); //desired rotation
 
             IMUControl.getPosition(position,imu1,imu2);
-            IMUControl.imuDrive(motors,controller,position,true);
+            IMUControl.imuDrive(motors,controller,position[0],true);
 
             leftFront.setPower(motors[0]);
             leftBack.setPower(motors[1]);
@@ -112,6 +112,7 @@ public class IMUmecDrive extends LinearOpMode {
 
             loopCounter++;
             telemetry.addData("Loops per second", ((int)(loopCounter/time)));
+            telemetry.addData("rotation position", position[0]);
             telemetry.update();
         }
 

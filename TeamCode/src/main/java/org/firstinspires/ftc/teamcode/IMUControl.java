@@ -11,7 +11,7 @@ import static java.lang.Math.*;
 
 public class IMUControl {
     //will convert an angle into a value that is greater than or equal to 0 and less than 2pi
-    public double calcAngle(double angle) {
+    private double calcAngle(double angle) {
         //a is the angle
         //greater than or equal to 0
         while (angle < 0) {
@@ -25,7 +25,7 @@ public class IMUControl {
     }
 
     //smooths data
-    public void smooth(double[] smoothData, double[] newData, double fraction) {
+    public double[] smooth(double[] smoothData, double[] newData, double fraction) {
 
         for (int axis = 2; axis > -1; axis--) {
             //smooths the data
@@ -34,40 +34,50 @@ public class IMUControl {
             smoothData[0] = calcAngle(smoothData[0]);
         }
 
+        return smoothData;
+
     }
 
-    public double[] compensate(double[] imput, double angle) {
+    public double[] compensate(double[] oldXY, double angle) {
         //0 is the x values
         //1 is the y values
+        //2 is the r values
+        double[]newXY = new double[3];
 
-        double[] output = new double[2];
-
-        if (imput[0] != 0) {
-            output[0] = sqrt(pow(imput[0], 2) + pow(imput[1], 2)) * (cos(angle - atan(imput[1] / imput[0])));
-            output[1] = sqrt(pow(imput[0], 2) + pow(imput[1], 2)) * (sin(angle - atan(imput[2] / imput[0])));
-        } else {
-            if (imput[1] > 0) {
-                output[0] = imput[1] * (cos(angle - PI / 2));
-                output[1] = imput[1] * (sin(angle - PI / 2));
-            } else if (imput[2] < 0) {
-                output[0] = imput[1] * (cos(angle - 3 * PI / 2));
-                output[1] = imput[1] * (sin(angle - 3 * PI / 2));
-            } else {
-                output[0] = 0;
-                output[1] = 0;
+        if (oldXY[0] != 0) {
+            newXY[0] = sqrt(pow(oldXY[0], 2) + pow(oldXY[1], 2)) * (cos(angle - atan(oldXY[1] / oldXY[0])));
+            newXY[1] = sqrt(pow(oldXY[0], 2) + pow(oldXY[1], 2)) * (sin(angle - atan(oldXY[1] / oldXY[0])));
+        }
+        else {
+            if (oldXY[1] > 0) {
+                newXY[0] = oldXY[1] * (cos(angle - PI / 2));
+                newXY[1] = oldXY[1] * (sin(angle - PI / 2));
+            }
+            else if (oldXY[1] < 0) {
+                newXY[0] = oldXY[1] * (cos(angle - 3 * PI / 2));
+                newXY[1] = oldXY[1] * (sin(angle - 3 * PI / 2));
+            }
+            else {
+                newXY[0] = 0;
+                newXY[1] = 0;
             }
         }
-        if (output[0] > 0) {
-            output[0] *= -1;
+        if (newXY[0] > 0) {
+            newXY[0] *= -1;
         }
+        newXY[2] = oldXY[2];
 
-        return output;
+        oldXY[0] = newXY[0];
+        oldXY[1] = newXY[1];
+        oldXY[2] = newXY[2];
+
+        return oldXY;
     }
 
-    public double[] imuDrive(double[]output, double[] imput, double[] position, boolean c){
+    public double[] imuDrive(double[]output, double[] imput, double angle, boolean c){
 
         if(c) {
-            compensate(imput,position[0]);
+            compensate(imput,angle);
         }
 
         //adds the raw values
@@ -103,13 +113,13 @@ public class IMUControl {
             if (outputPosition[axis] - imputPosition[axis] > PI) imputPosition[axis] += 2 * PI;
         }
 
-        smooth(outputPosition, imputPosition, .4);
+        smooth(outputPosition, imputPosition, .5);
 
         return outputPosition;
     }
 
     //initializes paramateres
-    public void startIMU(BNO055IMU imu1,BNO055IMU imu2){
+    public void createIMU(BNO055IMU imu1,BNO055IMU imu2){
         //creates the imu and its parameters
         BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
         parameters.loggingEnabled = true;
@@ -131,8 +141,6 @@ public class IMUControl {
         File file2 = AppUtil.getInstance().getSettingsFile(filename2);
         ReadWriteFile.writeFile(file2, calibrationData2.serialize());
     }
-
-
 
 }
 
