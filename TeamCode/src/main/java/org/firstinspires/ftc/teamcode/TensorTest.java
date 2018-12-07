@@ -31,11 +31,12 @@ public class TensorTest extends LinearOpMode {
         }
 
         waitForStart();
-        runtime.reset();
 
         if (tfod != null) {
             tfod.activate();
         }
+
+        runtime.reset();
 
         while (opModeIsActive() && mineralPosition == 0 || runtime.seconds() < 3) {
             mineralPosition = flowTensor();
@@ -92,6 +93,20 @@ public class TensorTest extends LinearOpMode {
         tfod.loadModelFromAsset(TFOD_MODEL_ASSET, LABEL_GOLD_MINERAL, LABEL_SILVER_MINERAL);
     }
 
+    private void sortArray(List<Recognition> arrayList){
+        int size = arrayList.size();
+
+        if(size >= 3) {
+            for (int i = 1; i < size; i++) {
+                for (int j = size - 1; j >= i; j--) {
+                    if (arrayList.get(j - 1).getTop() < arrayList.get(j).getTop()) {
+                        arrayList.set(j, arrayList.set(j - 1, arrayList.get(j)));
+                    }
+                }
+            }
+        }
+    }
+
     private int flowTensor(){
         int mineralPosition = 0;
         int goldMineralX = -1;
@@ -105,19 +120,25 @@ public class TensorTest extends LinearOpMode {
             if (updatedRecognitions != null) {
                 telemetry.addData("# Object Detected", updatedRecognitions.size());
 
-                for(Recognition recognition : updatedRecognitions){
-                    while(validRecognitions.size() < 3) {
-                        size++;
-
-                        if((int) recognition.getTop() > size) {
+                /*while(validRecognitions.size() < 3) {
+                    for (Recognition recognition : updatedRecognitions) {
+                        if ((int) recognition.getTop() > size) {
                             validRecognitions.add(recognition);
                             telemetry.addLine("Added valid recognition " + recognition.getLabel());
                             telemetry.addData(recognition.getLabel() + " Y Value", (int) recognition.getTop());
                         }
                     }
-                }
 
-                if (validRecognitions.size() == 3) {
+                    size++;
+                }*/
+
+                sortArray(updatedRecognitions);
+
+                if (updatedRecognitions.size() >= 3) {
+
+                    validRecognitions.add(updatedRecognitions.get(0));
+                    validRecognitions.add(updatedRecognitions.get(1));
+                    validRecognitions.add(updatedRecognitions.get(2));
 
                     for (Recognition recognition : validRecognitions) {
 
