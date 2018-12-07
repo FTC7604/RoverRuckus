@@ -38,13 +38,15 @@ import static java.lang.Math.*;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.util.ReadWriteFile;
 import org.firstinspires.ftc.robotcore.internal.system.AppUtil;
+
 import java.io.File;
 
 @TeleOp(name="Mechanum 4.0", group="Linear Opmode")
 //@Disabled
 public class IMUmecDrive extends LinearOpMode {
 
-    //creates the runtime
+    private IMUControl IMUControl = new IMUControl();
+
     private ElapsedTime runtime = new ElapsedTime();
 
     //creates the 4 motors
@@ -52,6 +54,10 @@ public class IMUmecDrive extends LinearOpMode {
     private DcMotor rightFront = null;
     private DcMotor leftBack    = null;
     private DcMotor rightBack   = null;
+
+    //creates the imus
+    private BNO055IMU imu1 = null;
+    private BNO055IMU imu2 = null;
 
     //starts the Opmode
     @Override
@@ -67,12 +73,9 @@ public class IMUmecDrive extends LinearOpMode {
         rightBack = hardwareMap.get(DcMotor.class, "rb");
 
         //the imu
-        imu = hardwareMap.get(BNO055IMU.class, "imu");
-
-        //7. 2 imus
-        //I think that I might want to change it to i1 and i2, beucase left and right doesn't really matter
-//        imu = hardwareMap.get(BNO055IMU.class, "li");
-//        imu = hardwareMap.get(BNO055IMU.class, "ri");
+        imu1 = hardwareMap.get(BNO055IMU.class, "imu");
+        //Other imu
+        imu2 = hardwareMap.get(BNO055IMU.class, "imu 1");
 
         //reverses the left motors, so that they can be programed the same
         leftFront.setDirection(DcMotor.Direction.REVERSE);
@@ -85,17 +88,27 @@ public class IMUmecDrive extends LinearOpMode {
         runtime.reset();
 
         //Sets up the IMU
-        startIMU();
-        calibrateIMU();
+        IMUControl.startIMU(imu1,imu2);
+        IMUControl.calibrateIMU(imu1,imu2);
 
-        // 4. A though for gyro PID
-        // double desiredPosition = 0;
-        // double rotationPower = 0;
+        double[]controller = new double[3];
+        double[]motors = new double[4];
+        double[]position = new double[3];
 
         //loop that starts the opmode
         while (opModeIsActive()) {
 
-            imuDrive(pow(gamepad1.left_stick_y,3),pow(-gamepad1.left_stick_x,3),pow(gamepad1.right_stick_x,3),true);
+            controller[0] = pow(gamepad1.left_stick_x,3); //desired x movement
+            controller[1] = pow(gamepad1.left_stick_y,3); //desired y movement
+            controller[2] = pow(gamepad1.right_stick_x,3); //desired rotation
+
+            IMUControl.getPosition(position,imu1,imu2);
+            IMUControl.imuDrive(motors,controller,position,true);
+
+            leftFront.setPower(motors[0]);
+            leftBack.setPower(motors[1]);
+            rightFront.setPower(motors[2]);
+            rightBack.setPower(motors[3]);
 
             loopCounter++;
             telemetry.addData("Loops per second", ((int)(loopCounter/time)));
@@ -104,190 +117,4 @@ public class IMUmecDrive extends LinearOpMode {
 
     }
     private int loopCounter;
-
-    private void imuTurn(double angle){
-        double netAngle = angle - smoothPosition[0];
-        double variablility = 0.2;
-
-        while(netAngle < smoothPosition[0] - variablility && netAngle > smoothPosition[0] + variablility) {
-            imuDrive(0, 0, netAngle - smoothPosition[0], false);
-        }
-    }
-
-    //y is the y-position that the bot must move, ditto for x, r is the desired rotation
-    //c is is wether or not the drive is field centric
-    private void imuDrive(double y, double x, double r, boolean c){
-
-        //3.Sets the array for the IMU, then changes the rotation value
-        getPosition();
-        smooth(smoothPosition,newPosition,.2);
-
-        //gets the movement and rotation respectively
-        getRobot_movement(x,y,c);
-        getRobot_rotation(r);
-
-        //sends those values to the motor
-        imputMecanumMotors();
-
-    }
-
-    //will convert an angle into a value that is greater than or equal to 0 and less than 2pi
-    private double calcAngle(double angle){
-        //a is the angle
-        //greater than or equal to 0
-        while(angle < 0){
-            angle += 2 * PI;
-        }
-        //less than pi
-        while(angle >= 2 * PI){
-            angle -= 2 * PI;
-        }
-        return angle;
-    }
-
-    //smooths data
-    private double[] smooth(double[] smoothData, double[] newData, double fraction){
-
-        for(int axis = 2; axis > -1; axis--){
-            //smooths the data
-            smoothData[axis] = ((1-fraction) * smoothData[axis]) + (fraction * newData[axis]);
-            //prevents the data from remaining within the bounds
-            smoothData[0] = calcAngle(smoothData[0]);
-        }
-
-        return smoothData;
-    }
-
-    //1. Creates class arrays that can be altered induvidually.
-    private double [] robot_movement = new double[4];
-    private double [] robot_rotation = new double[4];
-    //0 is left front
-    //1 is left back
-    //2 is right front
-    //3 is right back
-
-    private void getRobot_movement(double x1, double y1,boolean c){
-        double x2;
-        double y2;
-
-        if(c) {
-            if (x1 != 0) {
-                x2 = sqrt(pow(x1, 2) + pow(y1, 2)) * (cos(smoothPosition[0] - atan(y1 / x1)));
-                y2 = sqrt(pow(x1, 2) + pow(y1, 2)) * (sin(smoothPosition[0] - atan(y1 / x1)));
-            } else {
-                if (y1 > 0) {
-                    x2 = sqrt(pow(x1, 2) + pow(y1, 2)) * (cos(smoothPosition[0] - PI / 2));
-                    y2 = sqrt(pow(x1, 2) + pow(y1, 2)) * (sin(smoothPosition[0] - PI / 2));
-                } else if (y1 < 0) {
-                    x2 = sqrt(pow(x1, 2) + pow(y1, 2)) * (cos(smoothPosition[0] - 3 * PI / 2));
-                    y2 = sqrt(pow(x1, 2) + pow(y1, 2)) * (sin(smoothPosition[0] - 3 * PI / 2));
-                } else {
-                    x2 = 0;
-                    y2 = 0;
-                }
-            }
-        }
-        else{
-            x2 = 0;
-            y2 = 0;
-        }
-
-        //adds the raw values
-        robot_movement[0] = y2 - x2;
-        robot_movement[1] = y2 + x2;
-        robot_movement[2] = y2 + x2;
-        robot_movement[3] = y2 - x2;
-
-        telemetry.addData("robot_x", x2);
-        telemetry.addData("robot_y", y2);
-    }
-
-    private void getRobot_rotation(double r){
-        robot_rotation[0] = r;
-        robot_rotation[1] = r;
-        robot_rotation[2] = -r;
-        robot_rotation[3] = -r;
-
-        telemetry.addData("robot_rotation", r);
-    }
-
-    private void imputMecanumMotors(){
-        leftFront.setPower(robot_rotation[0] + robot_movement[0]);
-        leftBack.setPower(robot_rotation[1] + robot_movement[1]);
-        rightFront.setPower(robot_rotation[2] + robot_movement[2]);
-        rightBack.setPower(robot_rotation[3] + robot_movement[3]);
-    }
-
-    //3. Creates the IMU then its array
-    private BNO055IMU imu = null;
-
-    //7. 2 imus
-//    private BNO055IMU left_imu = null;
-//    private BNO055IMU right_imu = null;
-
-    //initializes paramateres
-    private void startIMU(){
-        //creates the imu and its parameters
-        BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
-        parameters.loggingEnabled = true;
-        parameters.loggingTag = "IMU";
-        imu.initialize(parameters);
-
-        //7. 2 imus
-//        BNO055IMU.Parameters left_parameters = new BNO055IMU.Parameters();
-//        left_parameters.loggingEnabled = true;
-//        left_parameters.loggingTag = "left_imu";
-//        left_imu.initialize(left_parameters);
-//
-//        BNO055IMU.Parameters right_parameters = new BNO055IMU.Parameters();
-//        right_parameters.loggingEnabled = true;
-//        right_parameters.loggingTag = "right_imu";
-//        right_imu.initialize(right_parameters);
-    }
-
-    //resets those parameters
-    private void calibrateIMU(){
-        // Get the calibration data and reset it
-        BNO055IMU.CalibrationData calibrationData = imu.readCalibrationData();
-        String filename = "AdafruitIMUCalibration.json";
-        File file = AppUtil.getInstance().getSettingsFile(filename);
-        ReadWriteFile.writeFile(file, calibrationData.serialize());
-
-        //7. 2 imus
-//        BNO055IMU.CalibrationData left_calibration = left_imu.readCalibrationData();
-//        String left_filename = "left_imu.json";
-//        File left_file = AppUtil.getInstance().getSettingsFile(left_filename);
-//        ReadWriteFile.writeFile(left_file, left_calibration.serialize());
-//
-//        BNO055IMU.CalibrationData right_calibration = right_imu.readCalibrationData();
-//        String right_filename = "right_imu.json";
-//        File right_file = AppUtil.getInstance().getSettingsFile(right_filename);
-//        ReadWriteFile.writeFile(right_file, right_calibration.serialize());
-    }
-
-    private double[]smoothPosition = new double[3];
-    private double[]newPosition = new double[3];
-
-    //creates the new position for the new value
-    private void getPosition(){
-
-        //gets the raw values.
-        newPosition[0] = (imu.getAngularOrientation().firstAngle);//Yaw
-        newPosition[1] = (imu.getAngularOrientation().secondAngle);//Roll
-        newPosition[2] = (imu.getAngularOrientation().thirdAngle);//Pitch
-
-        //7. 2 imus
-//        newPosition[0] = (left_imu.getAngularOrientation().firstAngle + right_imu.getAngularOrientation().firstAngle)/2;
-//        newPosition[1] = (left_imu.getAngularOrientation().secondAngle + right_imu.getAngularOrientation().secondAngle)/2;
-//        newPosition[2] = (left_imu.getAngularOrientation().thirdAngle + right_imu.getAngularOrientation().thirdAngle)/2;
-
-        //The angles are on the circle can't just be averaged, so if the difference, is greater than pi, then it changes the value so it isn't
-        for(int axis = 2; axis > 0-1; axis--){
-            if (newPosition[axis] - smoothPosition[axis] > PI) newPosition[axis] -= 2 * PI;
-            if (smoothPosition[axis] - newPosition[axis] > PI) newPosition[axis] += 2 * PI;
-        }
-
-        telemetry.addData("smooth_position", smoothPosition[0]);
-        telemetry.addData("new_position", newPosition[0]);
-    }
 }
