@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.Servo;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,14 +15,25 @@ import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
 
 @Autonomous(name = "Tensor Test", group = "Linear Op")
 public class TensorTest extends LinearOpMode {
+    //Random variables
     private ElapsedTime runtime = new ElapsedTime();
     private static int numLoops = 0;
-    private static int size = 0;
+    private final double openPhone = 0.75;
+    private final double closedPhone = 0.23;
+
+    //Hardware
+    private Servo phoneMount = null;
+
+    private void configureHardware(){
+        phoneMount = hardwareMap.get(Servo.class, "ph");
+    }
 
     @Override
     public void runOpMode() {
         int mineralPosition = 0;
         String mineralPositionString;
+
+        phoneMount.setPosition(closedPhone);
         initVuforia();
 
         if (ClassFactory.getInstance().canCreateTFObjectDetector()) {
@@ -31,6 +43,7 @@ public class TensorTest extends LinearOpMode {
         }
 
         waitForStart();
+        phoneMount.setPosition(openPhone);
 
         if (tfod != null) {
             tfod.activate();
@@ -38,7 +51,7 @@ public class TensorTest extends LinearOpMode {
 
         runtime.reset();
 
-        while (opModeIsActive() && mineralPosition == 0 || runtime.seconds() < 3) {
+        while (opModeIsActive() && mineralPosition == 0 || runtime.seconds() < 2) {
             mineralPosition = flowTensor();
         }
 
@@ -46,7 +59,6 @@ public class TensorTest extends LinearOpMode {
             tfod.shutdown();
         }
 
-        telemetry.clearAll();
         switch(mineralPosition){
             case 1:
                 mineralPositionString = "Left";
@@ -61,6 +73,8 @@ public class TensorTest extends LinearOpMode {
                 mineralPositionString = "Error while reading";
                 break;
         }
+
+        telemetry.clearAll();
         telemetry.addData("Mineral position", mineralPositionString);
         telemetry.addData("Mineral position", mineralPosition);
         telemetry.addData("Time", runtime.seconds());
