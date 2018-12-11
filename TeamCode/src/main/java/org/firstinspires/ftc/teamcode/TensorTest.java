@@ -33,6 +33,7 @@ public class TensorTest extends LinearOpMode {
         int mineralPosition = 0;
         String mineralPositionString;
 
+        configureHardware();
         phoneMount.setPosition(closedPhone);
         initVuforia();
 
@@ -43,10 +44,10 @@ public class TensorTest extends LinearOpMode {
         }
 
         waitForStart();
-        phoneMount.setPosition(openPhone);
 
         if (tfod != null) {
             tfod.activate();
+            phoneMount.setPosition(openPhone);
         }
 
         runtime.reset();
@@ -57,6 +58,7 @@ public class TensorTest extends LinearOpMode {
 
         if (tfod != null) {
             tfod.shutdown();
+            phoneMount.setPosition(closedPhone);
         }
 
         switch(mineralPosition){
@@ -83,6 +85,14 @@ public class TensorTest extends LinearOpMode {
 
         sleep(3000);
     }
+
+    /*@Override
+    public void stop(){
+        if (tfod != null) {
+            tfod.shutdown();
+            phoneMount.setPosition(closedPhone);
+        }
+    }*/
 
     //Dirty Vuforia things
     private static final String TFOD_MODEL_ASSET = "RoverRuckus.tflite";
@@ -113,7 +123,7 @@ public class TensorTest extends LinearOpMode {
         if(size >= 3) {
             for (int i = 1; i < size; i++) {
                 for (int j = size - 1; j >= i; j--) {
-                    if (arrayList.get(j - 1).getTop() < arrayList.get(j).getTop()) {
+                    if (arrayList.get(j - 1).getLeft() > arrayList.get(j).getLeft()) {
                         arrayList.set(j, arrayList.set(j - 1, arrayList.get(j)));
                     }
                 }
@@ -157,14 +167,14 @@ public class TensorTest extends LinearOpMode {
                     for (Recognition recognition : validRecognitions) {
 
                         if (recognition.getLabel().equals(LABEL_GOLD_MINERAL)) {
-                            goldMineralX = (int) recognition.getLeft();
-                            telemetry.addData("Gold Mineral Y Value", (int) recognition.getTop());
+                            goldMineralX = (int) recognition.getTop();
+                            telemetry.addData("Gold Mineral 'Y' Value", (int) recognition.getLeft());
                         } else if (silverMineral1X == -1) {
-                            silverMineral1X = (int) recognition.getLeft();
-                            telemetry.addData("Silver Mineral Y Value", (int) recognition.getTop());
+                            silverMineral1X = (int) recognition.getTop();
+                            telemetry.addData("Silver Mineral 'Y' Value", (int) recognition.getLeft());
                         } else {
-                            silverMineral2X = (int) recognition.getLeft();
-                            telemetry.addData("Silver Mineral Y Value", (int) recognition.getTop());
+                            silverMineral2X = (int) recognition.getTop();
+                            telemetry.addData("Silver Mineral 'Y' Value", (int) recognition.getLeft());
                         }
 
                     }
