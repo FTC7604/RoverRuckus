@@ -49,22 +49,22 @@ public class IMUControl {
 
         if(x1 != 0) {
             if(x1 > 0) {
-                x2 = sqrt(x1 * x1 + y1 * y1) * cos(angle - atan(y1 / x1));
-                y2 = sqrt(x1 * x1 + y1 * y1) * sin(angle - atan(y1 / x1));
+                x2 = sqrt(x1 * x1 + y1 * y1) * cos(atan(y1 / x1) - angle);
+                y2 = sqrt(x1 * x1 + y1 * y1) * sin(atan(y1 / x1) - angle);
             }
             else if(x1 < 0) {
-                x2 = sqrt(x1 * x1 + y1 * y1) * cos(PI + angle - atan(y1 / x1));
-                y2 = sqrt(x1 * x1 + y1 * y1) * sin(PI + angle - atan(y1 / x1));
+                x2 = sqrt(x1 * x1 + y1 * y1) * cos(PI + atan(y1 / x1) - angle);
+                y2 = sqrt(x1 * x1 + y1 * y1) * sin(PI + atan(y1 / x1) - angle);
             }
         }
         else{
             if(y1 > 0){
-                x2 = abs(y1) * cos(atan(angle - PI/2));
-                y2 = abs(y1) * sin(atan(angle - PI/2));
+                x2 = abs(y1) * cos(PI/2 - angle);
+                y2 = abs(y1) * sin(PI/2 - angle);
             }
             else if(y1 < 0){
-                x2 = abs(y1) * cos(atan(angle - 3*PI/2));
-                y2 = abs(y1) * sin(atan(angle - 3*PI/2));
+                x2 = abs(y1) * cos(3*PI/2 - angle);
+                y2 = abs(y1) * sin(3*PI/2 - angle);
             }
             else{
                 x2 = 0;
@@ -91,8 +91,8 @@ public class IMUControl {
             compensate(imput,angle);
         }
         if(stabilize){
-            desiredTurnPosition += imput[2];
-            imput[2] = angle - desiredTurnPosition;
+            desiredTurnPosition += imput[2]/50;
+            imput[2] = remainTurn(desiredTurnPosition,angle) * .5;
         }
 
         //adds the raw values
@@ -146,17 +146,17 @@ public class IMUControl {
 
     public double[] turnIMU(double[]output,double desiredTurnPosition,BNO055IMU imu1,BNO055IMU imu2){
         double[] imputs = new double[3];
+        double[] position = new double[3];
 
-        imputs[2] = remainTurn(desiredTurnPosition,imu1,imu2) * .4;
+        getPosition(position,imu1,imu2,false);
+        imputs[2] = remainTurn(desiredTurnPosition,position[0]) * .4;
 
         imuDrive(output,imputs,0,false,false);
         return output;
     }
-    public double remainTurn(double desiredTurnPosition,BNO055IMU imu1,BNO055IMU imu2){
-        double[] position = new double[3];
+    public double remainTurn(double desiredTurnPosition,double angle){
 
-        getPosition(position,imu1,imu2,false);
-         return (position[0] - desiredTurnPosition);
+         return (angle - desiredTurnPosition);
     }
 
 }
