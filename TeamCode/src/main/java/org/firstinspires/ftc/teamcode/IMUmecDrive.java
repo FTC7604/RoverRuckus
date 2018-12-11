@@ -41,7 +41,7 @@ import org.firstinspires.ftc.robotcore.internal.system.AppUtil;
 
 import java.io.File;
 
-@TeleOp(name="Mechanum 4.0", group="Linear Opmode")
+@TeleOp(name="Mechanum 5.0", group="Linear Opmode")
 //@Disabled
 public class IMUmecDrive extends LinearOpMode {
 
@@ -74,7 +74,6 @@ public class IMUmecDrive extends LinearOpMode {
 
         //the imu
         imu1 = hardwareMap.get(BNO055IMU.class, "imu");
-        //Other imu
         imu2 = hardwareMap.get(BNO055IMU.class, "imu 1");
 
         //reverses the left motors, so that they can be programed the same
@@ -102,20 +101,33 @@ public class IMUmecDrive extends LinearOpMode {
             controller[1] = pow(-gamepad1.left_stick_y,3); //desired y movement
             controller[2] = pow(gamepad1.right_stick_x,3); //desired rotation
 
-            IMUControl.getPosition(position,imu1,imu2);
-            IMUControl.imuDrive(motors,controller,position[0],true);
+            telemetry.addData("start_controller_x", controller[0]);
+            telemetry.addData("start_controller_y", controller[1]);
 
-            leftFront.setPower(motors[0]);
-            leftBack.setPower(motors[1]);
-            rightFront.setPower(motors[2]);
-            rightBack.setPower(motors[3]);
+
+            IMUControl.getPosition(position,imu1,imu2,true);
+            IMUControl.imuDrive(motors,controller,position[0],true,false);
+
+            imputMecMotors(motors);
 
             loopCounter++;
             telemetry.addData("Loops per second", ((int)(loopCounter/time)));
             telemetry.addData("rotation position", position[0]);
+            telemetry.addData("end_controller_x", controller[0]);
+            telemetry.addData("end_controller_y", controller[1]);
             telemetry.update();
         }
 
+
+
     }
+
+    private void imputMecMotors(double[]imputs){
+        leftFront.setPower(imputs[0]);
+        leftBack.setPower(imputs[1]);
+        rightFront.setPower(imputs[2]);
+        rightBack.setPower(imputs[3]);
+    }
+
     private int loopCounter;
 }

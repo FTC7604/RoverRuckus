@@ -25,81 +25,86 @@ public class IMUControl {
     }
 
     //smooths data
-    public double[] smooth(double[] smoothData, double[] newData, double fraction) {
+    public double[] smooth(double[] smoothData, double[] newData, double fraction, boolean restrict) {
 
         for (int axis = 2; axis > -1; axis--) {
             //smooths the data
             smoothData[axis] = ((1 - fraction) * smoothData[axis]) + (fraction * newData[axis]);
             //prevents the data from remaining within the bounds
-            smoothData[0] = calcAngle(smoothData[0]);
+            if(restrict) {
+                smoothData[0] = calcAngle(smoothData[0]);
+            }
         }
 
         return smoothData;
 
     }
 
-    public double[] compensate(double[] oldXY, double angle) {
-        //0 is the x values
-        //1 is the y values
-        //2 is the r values
-        double[]newXY = new double[3];
+    public double[] compensate(double[] imput, double angle) {
+        double x1 = imput[0];
+        double y1 = imput[1];
 
-        if (oldXY[0] != 0) {
-            newXY[0] = sqrt(pow(oldXY[0], 2) + pow(oldXY[1], 2)) * (cos(angle - atan(oldXY[1] / oldXY[0])));
-            newXY[1] = sqrt(pow(oldXY[0], 2) + pow(oldXY[1], 2)) * (sin(angle - atan(oldXY[1] / oldXY[0])));
-        }
-        else {
-            if (oldXY[1] > 0) {
-                newXY[0] = oldXY[1] * (cos(angle - PI / 2));
-                newXY[1] = oldXY[1] * (sin(angle - PI / 2));
+        double x2 = 0;
+        double y2 = 0;
+
+        if(x1 != 0) {
+            if(x1 > 0) {
+                x2 = sqrt(x1 * x1 + y1 * y1) * cos(angle - atan(y1 / x1));
+                y2 = sqrt(x1 * x1 + y1 * y1) * sin(angle - atan(y1 / x1));
             }
-            else if (oldXY[1] < 0) {
-                newXY[0] = oldXY[1] * (cos(angle - 3 * PI / 2));
-                newXY[1] = oldXY[1] * (sin(angle - 3 * PI / 2));
-            }
-            else {
-                newXY[0] = 0;
-                newXY[1] = 0;
+            else if(x1 < 0) {
+                x2 = sqrt(x1 * x1 + y1 * y1) * cos(PI + angle - atan(y1 / x1));
+                y2 = sqrt(x1 * x1 + y1 * y1) * sin(PI + angle - atan(y1 / x1));
             }
         }
-        if (newXY[0] > 0) {
-            newXY[0] *= -1;
+        else{
+            if(y1 > 0){
+                x2 = abs(y1) * cos(atan(angle - PI/2));
+                y2 = abs(y1) * sin(atan(angle - PI/2));
+            }
+            else if(y1 < 0){
+                x2 = abs(y1) * cos(atan(angle - 3*PI/2));
+                y2 = abs(y1) * sin(atan(angle - 3*PI/2));
+            }
+            else{
+                x2 = 0;
+                y2 = 0;
+            }
+            y2 *= -1;
         }
-        newXY[2] = oldXY[2];
+        if(y1 < 0 && x1 == 0){
+            y2 *= -1;
+        }
 
-        oldXY[0] = newXY[0];
-        oldXY[1] = newXY[1];
-        oldXY[2] = newXY[2];
+        imput[0] = x2;
+        imput[1] = y2;
 
-        return oldXY;
+        return imput;
     }
 
-    public double[] imuDrive(double[]output, double[] imput, double angle, boolean c){
+    private double desiredTurnPosition = 0;
+    public double[] imuDrive(double[]output, double[] imput, double angle, boolean stabilize,boolean fieldCentric){
 
-        if(c) {
+        //compensate(imput, angle);
+
+        if(fieldCentric){
             compensate(imput,angle);
+        }
+        if(stabilize){
+            desiredTurnPosition += imput[2];
+            imput[2] = angle - desiredTurnPosition;
         }
 
         //adds the raw values
-        output[0] = (imput[1] - imput[0] + imput[2]);//leftFront
-        output[1] = (imput[1] + imput[0] + imput[2]);//leftBack
-        output[2] = (imput[1] + imput[0] - imput[2]);//rightFront
-        output[3] = (imput[1] - imput[0] - imput[2]);//rightBack
+        output[0] = (imput[1] - imput[0] + imput[2])/2;//leftFront
+        output[1] = (imput[1] + imput[0] + imput[2])/2;//leftBack
+        output[2] = (imput[1] + imput[0] - imput[2])/2;//rightFront
+        output[3] = (imput[1] - imput[0] - imput[2])/2;//rightBack
 
         return output;
     }
 
-    //Conceptually I don't understand how to write this method
-//    private void imuTurn(double angle, double position){
-//        double netAngle = angle - position;
-//        double variablility = 0.2;
-//
-//        while(netAngle < newPosition[0] - variablility && netAngle > newPosition[0] + variablility) {
-//            imuDrive(0, 0, netAngle - newPosition[0], false);
-//        }
-//    }
-
-    public double[] getPosition(double[] outputPosition, BNO055IMU imu1, BNO055IMU imu2){
+    public double[] getPosition(double[] outputPosition, BNO055IMU imu1, BNO055IMU imu2,boolean restrict){
         double[] imputPosition = new double[3];
 
         //gets the raw values.
@@ -108,12 +113,12 @@ public class IMUControl {
         imputPosition[2] = (imu1.getAngularOrientation().thirdAngle + imu2.getAngularOrientation().thirdAngle)/2;//Pitch
 
         //The angles are on the circle can't just be averaged, so if the difference, is greater than pi, then it changes the value so it isn't
-        for(int axis = 2; axis > 0-1; axis--){
+        for (int axis = 2; axis > 0 - 1; axis--) {
             if (imputPosition[axis] - outputPosition[axis] > PI) imputPosition[axis] -= 2 * PI;
             if (outputPosition[axis] - imputPosition[axis] > PI) imputPosition[axis] += 2 * PI;
         }
 
-        smooth(outputPosition, imputPosition, .5);
+        smooth(outputPosition, imputPosition, .75, restrict);
 
         return outputPosition;
     }
@@ -127,20 +132,31 @@ public class IMUControl {
         imu1.initialize(parameters);
         imu2.initialize(parameters);
     }
-
     public void calibrateIMU(BNO055IMU imu1, BNO055IMU imu2){
         // Get the calibration data and reset it
         BNO055IMU.CalibrationData calibrationData1 = imu1.readCalibrationData();
-        String filename1 = "AdafruitIMUCalibration1.json";
-        File file1 = AppUtil.getInstance().getSettingsFile(filename1);
+        File file1 = AppUtil.getInstance().getSettingsFile("AdafruitIMUCalibration1.json");
         ReadWriteFile.writeFile(file1, calibrationData1.serialize());
 
         //Creates the second imu
         BNO055IMU.CalibrationData calibrationData2 = imu2.readCalibrationData();
-        String filename2 = "AdafruitIMUCalibration2.json";
-        File file2 = AppUtil.getInstance().getSettingsFile(filename2);
+        File file2 = AppUtil.getInstance().getSettingsFile("AdafruitIMUCalibration2.json");
         ReadWriteFile.writeFile(file2, calibrationData2.serialize());
     }
 
-}
+    public double[] turnIMU(double[]output,double desiredTurnPosition,BNO055IMU imu1,BNO055IMU imu2){
+        double[] imputs = new double[3];
 
+        imputs[2] = remainTurn(desiredTurnPosition,imu1,imu2) * .4;
+
+        imuDrive(output,imputs,0,false,false);
+        return output;
+    }
+    public double remainTurn(double desiredTurnPosition,BNO055IMU imu1,BNO055IMU imu2){
+        double[] position = new double[3];
+
+        getPosition(position,imu1,imu2,false);
+         return (position[0] - desiredTurnPosition);
+    }
+
+}
