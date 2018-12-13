@@ -39,6 +39,8 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.TouchSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.teamcode.util.PropertiesLoader;
+
 import static java.lang.Math.abs;
 
 @TeleOp(name="RR Full Teleop", group="Linear Opmode")
@@ -76,7 +78,8 @@ public class RRFullTeleop extends LinearOpMode {
     private boolean intakeCurrState = false;
     private boolean intakePrevState = false;
 
-
+    private PropertiesLoader loader = new PropertiesLoader("RRFullTeleop");
+    private final double SLOW_MULTIPLIER = loader.getDoubleProperty("slowMultiplier");
 
     @Override
     public void runOpMode() {
@@ -212,10 +215,15 @@ public class RRFullTeleop extends LinearOpMode {
         double x = (((-gamepad1.left_stick_x)*(abs(-gamepad1.left_stick_x))+((-gamepad1.right_stick_x)*(abs(-gamepad1.right_stick_x))))/2);
         double turnVal = (((-gamepad1.left_stick_y)-(-gamepad1.right_stick_y))/2);
 
-        leftFront.setPower(y-x+turnVal);
-        leftBack.setPower(y+x+turnVal);
-        rightFront.setPower(y+x-turnVal);
-        rightBack.setPower(y-x-turnVal);
+        double multiplier = 1;
+        if(gamepad1.right_bumper) {
+            multiplier = SLOW_MULTIPLIER;
+        }
+
+        leftFront.setPower(multiplier * (y-x+turnVal));
+        leftBack.setPower(multiplier * (y+x+turnVal));
+        rightFront.setPower(multiplier * (y+x-turnVal));
+        rightBack.setPower(multiplier * (y-x-turnVal));
 
         telemetry.addData("y", y);
         telemetry.addData("x", x);

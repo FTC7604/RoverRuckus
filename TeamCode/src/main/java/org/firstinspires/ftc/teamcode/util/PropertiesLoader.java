@@ -31,6 +31,10 @@ public class PropertiesLoader
         }
     }
 
+    public int getIntegerProperty(String name)
+    {
+        return Integer.parseInt(getStringProperty(name));
+    }
 
     public float getFloatProperty(String name)
     {

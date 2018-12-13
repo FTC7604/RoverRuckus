@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
+import android.support.annotation.NonNull;
+
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -8,6 +10,13 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.teamcode.util.Crunchy;
 import org.firstinspires.ftc.teamcode.util.MotorControl;
 import org.firstinspires.ftc.teamcode.util.PropertiesLoader;
+import org.firstinspires.ftc.teamcode.util.vision.VisionTarget;
+import org.firstinspires.ftc.teamcode.util.vision.VisionTracking;
+
+import java.lang.annotation.Target;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.LinkedList;
 
 
 @Autonomous(name = "deploy Test", group = "Liner Op")
@@ -27,14 +36,18 @@ public class AutonomousPrototype extends LinearOpMode
     private double roUp = 1 - loUp;
     private double liftPower = loader.getDoubleProperty("liftPower");
 
-    int detectSample()
+    private enum SamplePosition
     {
-        int position = 0;
-        return position;
+        LEFT, CENTER, RIGHT
+    }
+
+    private SamplePosition detectSample()
+    {
+        return SamplePosition.LEFT;
     }
 
     //Movement methods
-    void deploy()
+    private void deploy()
     {
         int liftUpperLimit = (3889);//I just did the math for the values because android studio got mad
         int liftLowerLimit = (0 + 75);//the lift is all the way down, the plus is to compensate for lag.
@@ -62,7 +75,7 @@ public class AutonomousPrototype extends LinearOpMode
         crunchy.liftRight.setPower(0);
     }
 
-    void mineralArm(boolean deployed)
+    private void mineralArm(boolean deployed)
     {
         if (deployed)
         {
@@ -84,6 +97,9 @@ public class AutonomousPrototype extends LinearOpMode
         telemetry.update();
         crunchy.mapHardware(this);
 
+        final VisionTracking tracking = new VisionTracking(this);
+        tracking.init();
+
         waitForStart();
 
         runtime.reset();
@@ -97,28 +113,16 @@ public class AutonomousPrototype extends LinearOpMode
         motorControl.waitForDistance(crunchy.frontLeft, 950);
         crunchy.stop();
 
-        int mineralPosition = 0;
-        mineralPosition = detectSample();
+        SamplePosition mineralPosition = detectSample();
 
-        switch (mineralPosition)
+        while (opModeIsActive())
         {
-            case 1:
-                //Rotate 90 degrees left
-                //Strafe right
-                //Move servo arm down
-                //Move forwards
-                break;
-            case 2:
-                //Drive straight forwards
-                break;
-            case 3:
-                //Rotate 90 degrees left
-                //Move backwards
-                //Move servo arm down
-                //Strafe right
-                //Move forwards
-                break;
+            tracking.updateTracking();
+            Collection<VisionTarget> targets = tracking.getTrackingInfo();
+
+            
         }
+
 
         telemetry.clearAll();
         telemetry.addLine("This thing is done");

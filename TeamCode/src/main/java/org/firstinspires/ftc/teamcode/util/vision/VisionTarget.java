@@ -10,5 +10,6 @@ public class VisionTarget
     public float translationX, translationY, translationZ;
     public Orientation rotation;
     public float yaw, pitch, roll;
+    public int age;
 
 }

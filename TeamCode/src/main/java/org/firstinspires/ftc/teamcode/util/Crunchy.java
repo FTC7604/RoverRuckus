@@ -98,8 +98,18 @@ public class Crunchy
         backRight.setPower(br);
     }
 
+    public void drive(double left, double right)
+    {
+        drive(left, right, left, right);
+    }
+
+    public void drive(double power)
+    {
+        drive(power, power);
+    }
+
     public void stop()
     {
-        drive(0, 0, 0, 0);
+        drive(0);
     }
 }

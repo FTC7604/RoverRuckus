@@ -13,10 +13,12 @@ import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefaultListener;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
+import org.firstinspires.ftc.teamcode.util.PropertiesLoader;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -38,9 +40,6 @@ public class VisionTracking
     private static final VuforiaLocalizer.CameraDirection CAMERA_CHOICE = BACK;
 
     private OpenGLMatrix lastLocation = null;
-    private boolean targetVisible = false;
-
-    private VuforiaLocalizer vuforia;
 
     private Context context;
 
@@ -48,10 +47,20 @@ public class VisionTracking
     {
         PRE_INIT, POST_INIT, TRACKING
     }
+
     private VisionTrackingState state = VisionTrackingState.PRE_INIT;
     private List<VuforiaTrackable> allTrackables;
     private VuforiaTrackables targetsRoverRuckus;
     private Map<String, VisionTarget> targets = new HashMap<>();
+
+    private PropertiesLoader loader = new PropertiesLoader("VisionTracking");
+    private final int MAX_AGE = loader.getIntegerProperty("maxAge");
+    private final float CAMERA_FORWARD_DISPLACEMENT = loader.getFloatProperty("cameraForwardDisplacement");
+    private final float CAMERA_VERTICAL_DISPLACEMENT = loader.getFloatProperty("cameraVerticalDisplacement");
+    private final float CAMERA_LEFT_DISPLACEMENT = loader.getFloatProperty("cameraLeftDisplacement");
+    private final float CAMERA_ROTATION_X = loader.getFloatProperty("cameraRotationX");
+    private final float CAMERA_ROTATION_Y = loader.getFloatProperty("cameraRotationY");
+    private final float CAMERA_ROTATION_Z = loader.getFloatProperty("cameraRotationZ");
 
     public VisionTracking(Context context)
     {
@@ -77,9 +86,9 @@ public class VisionTracking
         parameters.vuforiaLicenseKey = VUFORIA_KEY;
         parameters.cameraDirection = CAMERA_CHOICE;
 
-        vuforia = ClassFactory.getInstance().createVuforia(parameters);
+        VuforiaLocalizer vuforia = ClassFactory.getInstance().createVuforia(parameters);
 
-        targetsRoverRuckus = this.vuforia.loadTrackablesFromAsset("RoverRuckus");
+        targetsRoverRuckus = vuforia.loadTrackablesFromAsset("RoverRuckus");
         VuforiaTrackable blueRover = targetsRoverRuckus.get(0);
         blueRover.setName("Blue-Rover");
         VuforiaTrackable redFootprint = targetsRoverRuckus.get(1);
@@ -92,7 +101,7 @@ public class VisionTracking
         allTrackables = new ArrayList<>();
         allTrackables.addAll(targetsRoverRuckus);
 
-        /**
+        /*
          * In order for localization to work, we need to tell the system where each target is on the field, and
          * where the phone resides on the robot.  These specifications are in the form of <em>transformation matrices.</em>
          * Transformation matrices are a central, important concept in the math here involved in localization.
@@ -112,7 +121,7 @@ public class VisionTracking
          *  coordinate system (the center of the field), facing up.
          */
 
-        /**
+        /*
          * To place the BlueRover target in the middle of the blue perimeter wall:
          * - First we rotate it 90 around the field's X axis to flip it upright.
          * - Then, we translate it along the Y axis to the blue perimeter wall.
@@ -122,7 +131,7 @@ public class VisionTracking
                 .multiplied(Orientation.getRotationMatrix(EXTRINSIC, XYZ, DEGREES, 90, 0, 0));
         blueRover.setLocation(blueRoverLocationOnField);
 
-        /**
+        /*
          * To place the RedFootprint target in the middle of the red perimeter wall:
          * - First we rotate it 90 around the field's X axis to flip it upright.
          * - Second, we rotate it 180 around the field's Z axis so the image is flat against the red perimeter wall
@@ -134,7 +143,7 @@ public class VisionTracking
                 .multiplied(Orientation.getRotationMatrix(EXTRINSIC, XYZ, DEGREES, 90, 0, 180));
         redFootprint.setLocation(redFootprintLocationOnField);
 
-        /**
+        /*
          * To place the FrontCraters target in the middle of the front perimeter wall:
          * - First we rotate it 90 around the field's X axis to flip it upright.
          * - Second, we rotate it 90 around the field's Z axis so the image is flat against the front wall
@@ -146,7 +155,7 @@ public class VisionTracking
                 .multiplied(Orientation.getRotationMatrix(EXTRINSIC, XYZ, DEGREES, 90, 0, 90));
         frontCraters.setLocation(frontCratersLocationOnField);
 
-        /**
+        /*
          * To place the BackSpace target in the middle of the back perimeter wall:
          * - First we rotate it 90 around the field's X axis to flip it upright.
          * - Second, we rotate it -90 around the field's Z axis so the image is flat against the back wall
@@ -158,7 +167,7 @@ public class VisionTracking
                 .multiplied(Orientation.getRotationMatrix(EXTRINSIC, XYZ, DEGREES, 90, 0, -90));
         backSpace.setLocation(backSpaceLocationOnField);
 
-        /**
+        /*
          * Create a transformation matrix describing where the phone is on the robot.
          *
          * The coordinate frame for the robot looks the same as the field.
@@ -181,14 +190,10 @@ public class VisionTracking
          * In this example, it is centered (left to right), but 110 mm forward of the middle of the robot, and 200 mm above ground level.
          */
 
-        final int CAMERA_FORWARD_DISPLACEMENT = 110;   // eg: Camera is 110 mm in front of robot center
-        final int CAMERA_VERTICAL_DISPLACEMENT = 200;   // eg: Camera is 200 mm above ground
-        final int CAMERA_LEFT_DISPLACEMENT = 0;     // eg: Camera is ON the robot's center line
-
         OpenGLMatrix phoneLocationOnRobot = OpenGLMatrix
                 .translation(CAMERA_FORWARD_DISPLACEMENT, CAMERA_LEFT_DISPLACEMENT, CAMERA_VERTICAL_DISPLACEMENT)
-                .multiplied(Orientation.getRotationMatrix(EXTRINSIC, YZX, DEGREES,
-                        CAMERA_CHOICE == FRONT ? 90 : -90, 0, 0));
+                .multiplied(Orientation.getRotationMatrix(EXTRINSIC, XYZ, DEGREES,
+                        CAMERA_ROTATION_X, CAMERA_ROTATION_Y, CAMERA_ROTATION_Z));
 
         /**  Let all the trackable listeners know where the phone is.  */
         for (VuforiaTrackable trackable : allTrackables)
@@ -202,21 +207,36 @@ public class VisionTracking
 
     public void updateTracking()
     {
-        /** Start tracking the data sets we care about. */
+        /* Start tracking the data sets we care about. */
         if (state == VisionTrackingState.PRE_INIT)
         {
             throw new IllegalStateException("Must call init() on VisionTracking before updateTracking()");
-        }
-        else if (state == VisionTrackingState.POST_INIT)
+        } else if (state == VisionTrackingState.POST_INIT)
         {
             targetsRoverRuckus.activate();
+            state = VisionTrackingState.TRACKING;
         }
         // check all the trackable target to see which one (if any) is visible.
-        targetVisible = false;
         for (final VuforiaTrackable trackable : allTrackables)
         {
             if (((VuforiaTrackableDefaultListener) trackable.getListener()).isVisible())
             {
+                for (VisionTarget target : targets.values())
+                {
+                    target.age++;
+                }
+
+                // Explicitly instantiating iterator up front to avoid ConcurrentModificationException
+                Iterator<Map.Entry<String, VisionTarget>> targetIterator = targets.entrySet().iterator();
+                while (targetIterator.hasNext())
+                {
+                    Map.Entry<String, VisionTarget> entry = targetIterator.next();
+                    if (entry.getValue().age > MAX_AGE)
+                    {
+                        targetIterator.remove();
+                    }
+                }
+
                 // getUpdatedRobotLocation() will return null if no new information is available since
                 // the last time that call was made, or if the trackable is not currently visible.
                 OpenGLMatrix robotLocationTransform = ((VuforiaTrackableDefaultListener) trackable.getListener()).getUpdatedRobotLocation();
@@ -225,31 +245,33 @@ public class VisionTracking
                     lastLocation = robotLocationTransform;
                 }
 
-                // express position (translation) of robot in inches.
+                // express position (translation) of robot in millimeters.
                 final VectorF trackableTranslation = lastLocation.getTranslation();
-//                telemetry.addData("Pos (in)", "{X, Y, Z} = %.1f, %.1f, %.1f",
-//                        translation.get(0) / mmPerInch, translation.get(1) / mmPerInch, translation.get(2) / mmPerInch);
 
                 // express the rotation of the robot in degrees.
                 final Orientation trackableRotation = Orientation.getOrientation(lastLocation, EXTRINSIC, XYZ, DEGREES);
-//                telemetry.addData("Rot (deg)", "{Roll, Pitch, Heading} = %.0f, %.0f, %.0f", rotation.firstAngle, rotation.secondAngle, rotation.thirdAngle);
 
-                VisionTarget info = new VisionTarget() {{
+                VisionTarget info = new VisionTarget()
+                {{
                     name = trackable.getName();
                     translation = trackableTranslation;
                     translationX = translation.get(0);
+
                     translationY = translation.get(1);
                     translationZ = translation.get(2);
                     rotation = trackableRotation;
-                    yaw = rotation.firstAngle;
+                    roll = rotation.firstAngle;
                     pitch = rotation.secondAngle;
-                    roll = rotation.thirdAngle;
+                    yaw = rotation.thirdAngle;
                 }};
+
+                targets.put(info.name, info);
             }
         }
     }
 
-    public Collection<VisionTarget> getTrackingInfo() {
+    public Collection<VisionTarget> getTrackingInfo()
+    {
         return targets.values();
     }
 }
