@@ -97,7 +97,7 @@ public class TensorTest extends LinearOpMode {
 
         runtime.reset();
 
-        while (opModeIsActive() && mineralPosition == 0 || runtime.seconds() < 2) {
+        while (opModeIsActive() && (mineralPosition == 0 || runtime.seconds() < 2)) {
             if (tfod != null) {
                 List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
                 List<Recognition> validRecognitions = new ArrayList<>();
