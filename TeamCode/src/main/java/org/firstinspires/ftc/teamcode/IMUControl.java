@@ -72,9 +72,6 @@ public class IMUControl {
             }
             y2 *= -1;
         }
-        if(y1 < 0 && x1 == 0){
-            y2 *= -1;
-        }
 
         imput[0] = x2;
         imput[1] = y2;
