@@ -111,8 +111,9 @@ public class RRFullTeleop extends LinearOpMode {
 
         while (opModeIsActive()) {
 
-            intake.setPower(gamepad2.right_stick_y);
-
+            //intake.setPower(gamepad2.right_stick_y);
+            runIntake();
+            
             RunIntakeLift();
 
             RunLift();
@@ -130,7 +131,19 @@ public class RRFullTeleop extends LinearOpMode {
             telemetry.update();
         }
     }
-
+    
+    private void runIntake(){
+        int intakePosition = intake.getCurrentPosition() % (1440/2);
+        if(abs(gamepad2.right_stick_y) > 2){
+            intake.setPower(gamepad2.right_stick_y);
+        }
+        else{
+            while(intakePosition > (1440 - 200)/2 || intakePosition < 100){
+                intake.setPower(.5);
+            }
+         }
+    }
+    
     //toggles between engaged and disengaged position
     private void togglePosition(Servo servo, double disengagedPosition, double engagedPosition, boolean button){
         //default state, when the button isn't pressed it remains its engaged.
@@ -292,11 +305,13 @@ public class RRFullTeleop extends LinearOpMode {
         intake.setDirection(DcMotor.Direction.FORWARD);
         intakeLift.setDirection(DcMotor.Direction.FORWARD);
 
+        //intake.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         intakeLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         leftLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         rightLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         //makes it stop when the motor is at rest
+        //intake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         intakeLift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         leftLift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         rightLift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
