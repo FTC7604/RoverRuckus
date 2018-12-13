@@ -35,6 +35,8 @@ public class AutonomousPrototype extends LinearOpMode
     private double roDown = 1 - loDown;
     private double roUp = 1 - loUp;
     private double liftPower = loader.getDoubleProperty("liftPower");
+    private double openPhone = loader.getDoubleProperty("openPhone");
+    private double closedPhone = loader.getDoubleProperty("closedPhone");
 
     private enum SamplePosition
     {
@@ -100,10 +102,19 @@ public class AutonomousPrototype extends LinearOpMode
         final VisionTracking tracking = new VisionTracking(this);
         tracking.init();
 
+        crunchy.phoneMount.setPosition(closedPhone);
+        //Initiate tensor camera
+
         waitForStart();
 
         runtime.reset();
         telemetry.clearAll();
+
+        crunchy.phoneMount.setPosition(openPhone);
+
+        //Supposedly initiate tensor like int mineralPosition = flowTensor();
+
+        crunchy.phoneMount.setPosition(closedPhone);
 
         deploy();
 
