@@ -194,17 +194,20 @@ public class AutonomousPrototype extends LinearOpMode{
         switch(mineralPosition){
             case 1:
                 //Rotate 90 degrees left
-                //Strafe right
+                //Strafe right more
                 //Move servo arm down
                 //Move forwards
                 break;
             case 2:
-                //Drive straight forwards
+                //Rotate 90 degrees left
+                //Strafe right
+                //Move servo arm down
+                //Move forwards
                 break;
             case 3:
                 //Rotate 90 degrees left
-                //Move backwards
                 //Move servo arm down
+                //Move backwards
                 //Strafe right
                 //Move forwards
                 break;
