@@ -2,9 +2,10 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.util.ElapsedTime;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.Servo;
+
+import java.util.ArrayList;
 import java.util.List;
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
@@ -12,42 +13,26 @@ import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer.Came
 import org.firstinspires.ftc.robotcore.external.tfod.TFObjectDetector;
 import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
 
-@Autonomous(name = "Tensor Test", group = "Liner Op")
+@Autonomous(name = "Tensor Test", group = "Linear Op")
 public class TensorTest extends LinearOpMode {
+    //Random variables
     private ElapsedTime runtime = new ElapsedTime();
-    private static int numLoops = 0;
+    private final double openPhone = 0.75;
+    private final double closedPhone = 0.23;
+
+    //Hardware
+    private Servo phoneMount = null;
+
+    private void configureHardware(){
+        phoneMount = hardwareMap.get(Servo.class, "ph");
+    }
 
     @Override
     public void runOpMode() {
-        int mineralPosition = 0;
-        initVuforia();
+        configureHardware();
+        int mineralPosition = flowTensor();
 
-        if (ClassFactory.getInstance().canCreateTFObjectDetector()) {
-            initTfod();
-        } else {
-            telemetry.addData("Sorry!", "This device is not compatible with TFOD");
-        }
-
-        waitForStart();
-        runtime.reset();
-
-        if (tfod != null) {
-            tfod.activate();
-        }
-
-        while ((opModeIsActive() && mineralPosition == 0) || runtime.seconds() < 3) {
-            mineralPosition = finnaTry();
-        }
-
-        if (tfod != null) {
-            tfod.shutdown();
-        }
-
-        telemetry.clearAll();
-        telemetry.addData("Mineral position", mineralPosition);
-        telemetry.addData("Time", runtime.seconds());
-        telemetry.addData("Loops", numLoops);
-        telemetry.update();
+        sleep(3000);
     }
 
     //Dirty Vuforia things
@@ -73,55 +58,127 @@ public class TensorTest extends LinearOpMode {
         tfod.loadModelFromAsset(TFOD_MODEL_ASSET, LABEL_GOLD_MINERAL, LABEL_SILVER_MINERAL);
     }
 
-    private int finnaTry(){
-        int mineralPosition = 0;
+    private void sortArray(List<Recognition> arrayList){
+        int size = arrayList.size();
 
-        if (tfod != null) {
-            List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
-
-            if (updatedRecognitions != null) {
-                telemetry.addData("# Object Detected", updatedRecognitions.size());
-
-                if (updatedRecognitions.size() == 3) {
-                    int goldMineralX = -1;
-                    int silverMineral1X = -1;
-                    int silverMineral2X = -1;
-
-                    for (Recognition recognition : updatedRecognitions) {
-
-                        if (recognition.getLabel().equals(LABEL_GOLD_MINERAL)) {
-                            goldMineralX = (int) recognition.getLeft();
-                        } else if (silverMineral1X == -1) {
-                            silverMineral1X = (int) recognition.getLeft();
-                        } else {
-                            silverMineral2X = (int) recognition.getLeft();
-                        }
-
+        if(size >= 3) {
+            for (int i = 1; i < size; i++) {
+                for (int j = size - 1; j >= i; j--) {
+                    if (arrayList.get(j - 1).getLeft() > arrayList.get(j).getLeft()) {
+                        arrayList.set(j, arrayList.set(j - 1, arrayList.get(j)));
                     }
-
-                    if (goldMineralX != -1 && silverMineral1X != -1 && silverMineral2X != -1) {
-
-                        if (goldMineralX < silverMineral1X && goldMineralX < silverMineral2X) {
-                            telemetry.addData("Gold Mineral Position", "Left");
-                            mineralPosition = 1;
-                        } else if (goldMineralX > silverMineral1X && goldMineralX > silverMineral2X) {
-                            telemetry.addData("Gold Mineral Position", "Right");
-                            mineralPosition = 3;
-                        } else {
-                            telemetry.addData("Gold Mineral Position", "Center");
-                            mineralPosition = 2;
-                        }
-
-                    }
-
                 }
-
-                telemetry.update();
             }
+        }
+    }
 
+    private int flowTensor(){
+        String mineralPositionString;
+        int mineralPosition = 0;
+        int goldMineralX = -1;
+        int silverMineral1X = -1;
+        int silverMineral2X = -1;
+
+        phoneMount.setPosition(closedPhone);
+        initVuforia();
+
+        if (ClassFactory.getInstance().canCreateTFObjectDetector()) {
+            initTfod();
+        } else {
+            telemetry.addData("Sorry!", "This device is not compatible with TFOD");
         }
 
-        numLoops++;
+        waitForStart();
+
+        if (tfod != null) {
+            tfod.activate();
+            phoneMount.setPosition(openPhone);
+        }
+
+        runtime.reset();
+
+        while (opModeIsActive() && (mineralPosition == 0 || runtime.seconds() < 2)) {
+            if (tfod != null) {
+                List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
+                List<Recognition> validRecognitions = new ArrayList<>();
+
+                if (updatedRecognitions != null) {
+                    telemetry.addData("# Object Detected", updatedRecognitions.size());
+
+                    sortArray(updatedRecognitions);
+
+                    if (updatedRecognitions.size() >= 3) {
+
+                        validRecognitions.add(updatedRecognitions.get(0));
+                        validRecognitions.add(updatedRecognitions.get(1));
+                        validRecognitions.add(updatedRecognitions.get(2));
+
+                        for (Recognition recognition : validRecognitions) {
+
+                            if (recognition.getLabel().equals(LABEL_GOLD_MINERAL)) {
+                                goldMineralX = (int) recognition.getTop();
+                                telemetry.addData("Gold Mineral 'Y' Value", (int) recognition.getLeft());
+                            } else if (silverMineral1X == -1) {
+                                silverMineral1X = (int) recognition.getTop();
+                                telemetry.addData("Silver Mineral 'Y' Value", (int) recognition.getLeft());
+                            } else {
+                                silverMineral2X = (int) recognition.getTop();
+                                telemetry.addData("Silver Mineral 'Y' Value", (int) recognition.getLeft());
+                            }
+
+                        }
+
+                        if (goldMineralX != -1 && silverMineral1X != -1 && silverMineral2X != -1) {
+
+                            if (goldMineralX < silverMineral1X && goldMineralX < silverMineral2X) {
+                                telemetry.addData("Gold Mineral Position", "Left");
+                                mineralPosition = 1;
+                            } else if (goldMineralX > silverMineral1X && goldMineralX > silverMineral2X) {
+                                telemetry.addData("Gold Mineral Position", "Right");
+                                mineralPosition = 3;
+                            } else {
+                                telemetry.addData("Gold Mineral Position", "Center");
+                                mineralPosition = 2;
+                            }
+
+                        }
+
+                    }
+
+                    telemetry.update();
+                }
+
+            }
+
+            telemetry.clearAll();
+        }
+
+        if (tfod != null) {
+            tfod.shutdown();
+            phoneMount.setPosition(closedPhone);
+        }
+
+        switch(mineralPosition){
+            case 1:
+                mineralPositionString = "Left";
+                break;
+            case 2:
+                mineralPositionString = "Center";
+                break;
+            case 3:
+                mineralPositionString = "Right";
+                break;
+            default:
+                mineralPositionString = "Error while reading";
+                break;
+        }
+
+        telemetry.clearAll();
+        telemetry.addData("Mineral position", mineralPositionString);
+        telemetry.addData("Mineral position", mineralPosition);
+        telemetry.addData("Time", runtime.seconds());
+        telemetry.update();
+
         return mineralPosition;
     }
 }
