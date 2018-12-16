@@ -314,7 +314,7 @@ public class test_imuTurn extends LinearOpMode{
 //
 //        }while(abs(remainTurn) > 0.01);
 
-        imuTurn(turn,0.01);
+        imuTurn(turn,0.001);
 
         leftFront.setPower(0);
         leftBack.setPower(0);
