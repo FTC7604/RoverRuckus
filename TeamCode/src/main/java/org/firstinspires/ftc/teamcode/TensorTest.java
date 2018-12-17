@@ -12,27 +12,27 @@ import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer.Came
 import org.firstinspires.ftc.robotcore.external.tfod.TFObjectDetector;
 import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
 
-@Autonomous(name = "Tensor Test", group = "Linear Op")
+/*@Autonomous(name = "Tensor Test", group = "Linear Op")
 public class TensorTest extends LinearOpMode{
     //Random variables
     private ElapsedTime runtime = new ElapsedTime();
-    /*private final double openPhone = 0.75;
-    private final double closedPhone = 0.23;*/
+    //private final double openPhone = 0.75;
+    //private final double closedPhone = 0.23;
 
     //Hardware
     //private Servo phoneMount = null;
 
-    /*private void configureHardware(){
-        phoneMount = hardwareMap.get(Servo.class, "ph");
-    }
+    //private void configureHardware(){
+        //phoneMount = hardwareMap.get(Servo.class, "ph");
+    //}
 
-    @Override
-    public void runOpMode() {
-        configureHardware();
-        int mineralPosition = flowTensor();
+    //@Override
+    //public void runOpMode() {
+        //configureHardware();
+        //int mineralPosition = flowTensor();
 
-        sleep(3000);
-    }*/
+        //sleep(3000);
+    //}
 
     //Dirty Vuforia things
     private static final String TFOD_MODEL_ASSET = "RoverRuckus.tflite";
@@ -179,4 +179,4 @@ public class TensorTest extends LinearOpMode{
 
         return mineralPosition;
     }
-}
+}*/
