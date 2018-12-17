@@ -5,7 +5,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
 
-/*@TeleOp(name = "Programming Test")
+@TeleOp(name = "Programming Test")
 public class ProgrammingTestBot extends OpMode
 {
     DcMotor frontLeft, frontRight, backLeft, backRight;
@@ -84,4 +84,3 @@ public class ProgrammingTestBot extends OpMode
     {
     }
 }
-*/
