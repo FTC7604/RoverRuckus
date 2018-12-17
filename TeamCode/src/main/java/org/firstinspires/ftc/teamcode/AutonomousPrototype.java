@@ -10,6 +10,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.teamcode.util.Crunchy;
 import org.firstinspires.ftc.teamcode.util.MotorControl;
 import org.firstinspires.ftc.teamcode.util.PropertiesLoader;
+import org.firstinspires.ftc.teamcode.util.MineralDetector;
 import org.firstinspires.ftc.teamcode.util.vision.VisionTarget;
 import org.firstinspires.ftc.teamcode.util.vision.VisionTracking;
 
@@ -26,6 +27,7 @@ public class AutonomousPrototype extends LinearOpMode
     private ElapsedTime runtime = new ElapsedTime();
     private Crunchy crunchy = new Crunchy();
     private MotorControl motorControl = new MotorControl();
+    private MineralDetector mineralDetector = new MineralDetector();
 
     private PropertiesLoader loader = new PropertiesLoader("AutonomousPrototype");
     private double hookOpen = loader.getDoubleProperty("hookOpen");
@@ -37,15 +39,26 @@ public class AutonomousPrototype extends LinearOpMode
     private double liftPower = loader.getDoubleProperty("liftPower");
     private double openPhone = loader.getDoubleProperty("openPhone");
     private double closedPhone = loader.getDoubleProperty("closedPhone");
+    private int mineralPosition = 0;
 
     private enum SamplePosition
     {
         LEFT, CENTER, RIGHT
     }
 
-    private SamplePosition detectSample()
-    {
-        return SamplePosition.LEFT;
+    private SamplePosition detectSample() {
+        int mineralPosition = mineralDetector.detectMineral();
+
+        switch(mineralPosition){
+            case 1:
+                return SamplePosition.LEFT;
+            case 2:
+                return SamplePosition.CENTER;
+            case 3:
+                return SamplePosition.RIGHT;
+            default:
+                return SamplePosition.CENTER;
+        }
     }
 
     //Movement methods
@@ -103,6 +116,7 @@ public class AutonomousPrototype extends LinearOpMode
         tracking.init();
 
         crunchy.phoneMount.setPosition(closedPhone);
+        mineralDetector.mapHardware(this);
         //Initiate tensor camera
 
         waitForStart();
@@ -112,19 +126,21 @@ public class AutonomousPrototype extends LinearOpMode
 
         crunchy.phoneMount.setPosition(openPhone);
 
-        //Supposedly initiate tensor like int mineralPosition = flowTensor();
+        SamplePosition mineralPosition = detectSample();
 
         crunchy.phoneMount.setPosition(closedPhone);
 
-        deploy();
+        telemetry.clearAll();
+        telemetry.addData("Sample position", mineralPosition);
+        telemetry.update();
+
+        /*deploy();
 
         crunchy.hook.setPosition(hookOpen);
 
         crunchy.drive(0.5, 0.5, 0.5, 0.5);
         motorControl.waitForDistance(crunchy.frontLeft, 950);
         crunchy.stop();
-
-        SamplePosition mineralPosition = detectSample();
 
         while (opModeIsActive())
         {
@@ -137,7 +153,7 @@ public class AutonomousPrototype extends LinearOpMode
 
         telemetry.clearAll();
         telemetry.addLine("This thing is done");
-        telemetry.update();
+        telemetry.update();*/
 
         sleep(1000);
     }
