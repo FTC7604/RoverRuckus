@@ -41,7 +41,7 @@ import org.firstinspires.ftc.robotcore.internal.system.AppUtil;
 
 import java.io.File;
 
-/*@TeleOp(name="Mechanum 5.0", group="Linear Opmode")
+@TeleOp(name="Mechanum 5.0", group="Linear Opmode")
 //@Disabled
 public class IMUmecDrive extends LinearOpMode {
 
@@ -130,4 +130,4 @@ public class IMUmecDrive extends LinearOpMode {
     }
 
     private int loopCounter;
-}*/
+}

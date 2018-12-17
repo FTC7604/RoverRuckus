@@ -19,7 +19,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 
 
-/*@Autonomous(name = "deploy Test", group = "Liner Op")
+@Autonomous(name = "deploy Test", group = "Liner Op")
 public class AutonomousPrototype extends LinearOpMode
 {
     //creates the runtime
@@ -141,4 +141,4 @@ public class AutonomousPrototype extends LinearOpMode
 
         sleep(1000);
     }
-}*/
+}

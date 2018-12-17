@@ -12,7 +12,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
 import static java.lang.Math.*;
 
-/*@Autonomous(name = "Auto turn", group = "Liner Op")
+@Autonomous(name = "Auto turn", group = "Liner Op")
 
 public class test_imuTurn extends LinearOpMode{
     //creates the runtime
@@ -349,4 +349,4 @@ public class test_imuTurn extends LinearOpMode{
             imputMecVelocity(motors);
         }
     }
-}*/
+}

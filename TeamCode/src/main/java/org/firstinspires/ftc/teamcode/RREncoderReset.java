@@ -41,7 +41,7 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 
 import static java.lang.Math.abs;
 
-/*@TeleOp(name="RR Reset Encoders", group="Linear Opmode")
+@TeleOp(name="RR Reset Encoders", group="Linear Opmode")
 //@Disabled
 
 
@@ -287,4 +287,4 @@ public class RREncoderReset extends LinearOpMode {
         leftBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         rightBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
     }
-}*/
+}

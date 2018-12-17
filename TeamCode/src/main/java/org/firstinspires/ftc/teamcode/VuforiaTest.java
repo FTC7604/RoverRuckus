@@ -10,7 +10,7 @@ import org.firstinspires.ftc.teamcode.util.vision.VisionTracking;
 
 import java.util.Locale;
 
-/*@TeleOp(name = "Voo4ia test")
+@TeleOp(name = "Voo4ia test")
 public class VuforiaTest extends LinearOpMode
 {
     private PropertiesLoader loader = new PropertiesLoader("AutonomousPrototype");
@@ -46,4 +46,4 @@ public class VuforiaTest extends LinearOpMode
             telemetry.update();
         }
     }
-}*/
+}
