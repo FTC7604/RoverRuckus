@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.Servo;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,23 +17,23 @@ import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
 public class TensorTest extends LinearOpMode{
     //Random variables
     private ElapsedTime runtime = new ElapsedTime();
-    /*private final double openPhone = 0.75;
-    private final double closedPhone = 0.23;*/
+    private final double openPhone = 0.75;
+    private final double closedPhone = 0.23;
 
     //Hardware
-    //private Servo phoneMount = null;
+    private Servo phoneMount = null;
 
-    //private void configureHardware(){
-        //phoneMount = hardwareMap.get(Servo.class, "ph");
-    //}
+    private void configureHardware(){
+        phoneMount = hardwareMap.get(Servo.class, "ph");
+    }
 
-    //@Override
-    //public void runOpMode() {
-        //configureHardware();
-        //int mineralPosition = flowTensor();
+    @Override
+    public void runOpMode() {
+        configureHardware();
+        int mineralPosition = flowTensor();
 
-        //sleep(3000);
-    //}
+        sleep(3000);
+    }
 
     //Dirty Vuforia things
     private static final String TFOD_MODEL_ASSET = "RoverRuckus.tflite";
@@ -79,6 +80,7 @@ public class TensorTest extends LinearOpMode{
         int silverMineral2X = -1;
 
         initVuforia();
+        phoneMount.setPosition(closedPhone);
 
         if (ClassFactory.getInstance().canCreateTFObjectDetector()) {
             initTfod();
@@ -90,7 +92,7 @@ public class TensorTest extends LinearOpMode{
 
         if (tfod != null) {
             tfod.activate();
-            //phoneMount.setPosition(openPhone);
+            phoneMount.setPosition(openPhone);
         }
 
         runtime.reset();
@@ -153,7 +155,7 @@ public class TensorTest extends LinearOpMode{
 
         if (tfod != null) {
             tfod.shutdown();
-            //phoneMount.setPosition(closedPhone);
+            phoneMount.setPosition(closedPhone);
         }
 
         switch(mineralPosition){
