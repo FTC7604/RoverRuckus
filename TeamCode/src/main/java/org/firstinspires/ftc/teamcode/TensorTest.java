@@ -22,17 +22,17 @@ public class TensorTest extends LinearOpMode{
     //Hardware
     //private Servo phoneMount = null;
 
-    /*private void configureHardware(){
-        phoneMount = hardwareMap.get(Servo.class, "ph");
-    }
+    //private void configureHardware(){
+        //phoneMount = hardwareMap.get(Servo.class, "ph");
+    //}
 
-    @Override
-    public void runOpMode() {
-        configureHardware();
-        int mineralPosition = flowTensor();
+    //@Override
+    //public void runOpMode() {
+        //configureHardware();
+        //int mineralPosition = flowTensor();
 
-        sleep(3000);
-    }*/
+        //sleep(3000);
+    //}
 
     //Dirty Vuforia things
     private static final String TFOD_MODEL_ASSET = "RoverRuckus.tflite";
@@ -179,4 +179,4 @@ public class TensorTest extends LinearOpMode{
 
         return mineralPosition;
     }
-}
+}*/

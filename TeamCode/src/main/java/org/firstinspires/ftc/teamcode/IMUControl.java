@@ -9,7 +9,7 @@ import java.io.File;
 
 import static java.lang.Math.*;
 
-public class IMUControl {
+/*public class IMUControl {
     //will convert an angle into a value that is greater than or equal to 0 and less than 2pi
     private double calcAngle(double angle) {
         //a is the angle
@@ -156,4 +156,4 @@ public class IMUControl {
          return (angle - desiredTurnPosition);
     }
 
-}
+}*/
