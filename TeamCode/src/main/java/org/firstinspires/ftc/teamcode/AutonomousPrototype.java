@@ -57,6 +57,7 @@ public class AutonomousPrototype extends LinearOpMode
             case 3:
                 return SamplePosition.RIGHT;
             default:
+                telemetry.addLine("Error while detecting");
                 return SamplePosition.CENTER;
         }
     }
@@ -112,8 +113,8 @@ public class AutonomousPrototype extends LinearOpMode
         telemetry.update();
         crunchy.mapHardware(this);
 
-        final VisionTracking tracking = new VisionTracking(this);
-        tracking.init();
+        //final VisionTracking tracking = new VisionTracking(this);
+        //tracking.init();
 
         crunchy.phoneMount.setPosition(closedPhone);
         mineralDetector.mapHardware(this);
