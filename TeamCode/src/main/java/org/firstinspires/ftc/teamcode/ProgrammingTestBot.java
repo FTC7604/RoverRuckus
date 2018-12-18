@@ -1,11 +1,13 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
 
-/*@TeleOp(name = "Programming Test")
+@Disabled
+@TeleOp(name = "Programming Test")
 public class ProgrammingTestBot extends OpMode
 {
     DcMotor frontLeft, frontRight, backLeft, backRight;
@@ -84,4 +86,3 @@ public class ProgrammingTestBot extends OpMode
     {
     }
 }
-*/

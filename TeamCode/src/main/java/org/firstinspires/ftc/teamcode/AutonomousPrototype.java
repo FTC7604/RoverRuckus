@@ -119,8 +119,16 @@ public class AutonomousPrototype extends LinearOpMode
         {
             tracking.updateTracking();
             Collection<VisionTarget> targets = tracking.getTrackingInfo();
+            double translationX = 0, translationY = 0, translationZ = 0;
+            int size = targets.size();
+            for (VisionTarget target : targets)
+            {
+                translationX += (target.translationX / size);
+                translationY += (target.translationY / size);
+                translationZ += (target.translationZ / size);
+            }
 
-            
+
         }
 
 

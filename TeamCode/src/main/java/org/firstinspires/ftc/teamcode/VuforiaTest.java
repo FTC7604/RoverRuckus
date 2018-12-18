@@ -14,7 +14,7 @@ import java.util.Locale;
 public class VuforiaTest extends LinearOpMode
 {
     private PropertiesLoader loader = new PropertiesLoader("AutonomousPrototype");
-    private double hookOpen = loader.getDoubleProperty("hookOpen");
+    private double phoneMountPosition = loader.getDoubleProperty("phoneMountPosition");
     private Crunchy crunchy = new Crunchy();
 
     @Override
@@ -26,7 +26,7 @@ public class VuforiaTest extends LinearOpMode
 
         waitForStart();
 
-        crunchy.hook.setPosition(hookOpen);
+        crunchy.phoneMount.setPosition(phoneMountPosition);
 
         while(opModeIsActive())
         {

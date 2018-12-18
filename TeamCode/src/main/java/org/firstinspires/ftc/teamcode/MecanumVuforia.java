@@ -52,7 +52,7 @@ import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocaliz
 import java.util.ArrayList;
 import java.util.List;
 
-/*@TeleOp(name="Vuforia Test w/ Mecanum")
+@TeleOp(name="Vuforia Test w/ Mecanum")
 @Disabled
 public class MecanumVuforia extends LinearOpMode {
     private static final String VUFORIA_KEY = "AV5VOZX/////AAABmTEWZYmbTETAmhApEYSjV64M1wKvo63/rkUlklWS03sRinzHp1KxQV4LSBU0VY8gFkzkBd5dP7sHyEOxGZ3b84U7ziRJhZPeQgPnfOhzZnp2pzYVL0ZSo0DEILtdBRD00QD8Z5to3Urw9+0FLSZXIK+ekJ8jLMebgISE9wlnXS/mHr4vMdVi2T3K/L72fox7S6bpP/KGxZDjQuQpubi8qkdgBLhQf2bPjp1VLM1QuMmGXsiznqim4PZ/PEmU735RJ1zBYgXhGqtqc8xqblhJg33/Dx7Ymgj6il6CXjL8M95bAd/CzNcaGlzYL4zzqelpOeO9UJe3gYYKbkfWijLVxVT5ZQXOedN3eBUuocfROQjA";
@@ -133,7 +133,7 @@ public class MecanumVuforia extends LinearOpMode {
          * In this example, it is centered (left to right), but 110 mm forward of the middle of the robot, and 200 mm above ground level.
          */
 
-        /*final int CAMERA_FORWARD_DISPLACEMENT  = 110;   // eg: Camera is 110 mm in front of robot center
+        final int CAMERA_FORWARD_DISPLACEMENT  = 110;   // eg: Camera is 110 mm in front of robot center
         final int CAMERA_VERTICAL_DISPLACEMENT = 200;   // eg: Camera is 200 mm above ground
         final int CAMERA_LEFT_DISPLACEMENT     = 0;     // eg: Camera is ON the robot's center line
 
@@ -143,7 +143,7 @@ public class MecanumVuforia extends LinearOpMode {
                         CAMERA_CHOICE == FRONT ? 90 : -90, 0, 0));
 
         //  Let all the trackable listeners know where the phone is.
-        /*for (VuforiaTrackable trackable : allTrackables)
+        for (VuforiaTrackable trackable : allTrackables)
         {
             ((VuforiaTrackableDefaultListener)trackable.getListener()).setPhoneInformation(phoneLocationOnRobot, parameters.cameraDirection);
         }
@@ -191,4 +191,4 @@ public class MecanumVuforia extends LinearOpMode {
             telemetry.update();
         }
     }
-}*/
+}

@@ -43,7 +43,7 @@ import org.firstinspires.ftc.teamcode.util.PropertiesLoader;
 
 import static java.lang.Math.abs;
 
-/*@TeleOp(name="RR Full Teleop", group="Linear Opmode")
+@TeleOp(name="RR Full Teleop", group="Linear Opmode")
 //@Disabled
 
 
@@ -133,15 +133,13 @@ public class RRFullTeleop extends LinearOpMode {
     }
     
     private void runIntake(){
-        int intakePosition = intake.getCurrentPosition() % (1440/2);
-        if(abs(gamepad2.right_stick_y) > 2){
+        int intakePosition = intake.getCurrentPosition() % (1440 / 2);
+        if(abs(gamepad2.right_stick_y) > 2) {
             intake.setPower(gamepad2.right_stick_y);
         }
-        else{
-            while(intakePosition > (1440 - 200)/2 || intakePosition < 100){
+        else if(intakePosition > (1440 - 200)/2 || intakePosition < 100) {
                 intake.setPower(.5);
-            }
-         }
+        }
     }
     
     //toggles between engaged and disengaged position
@@ -327,4 +325,3 @@ public class RRFullTeleop extends LinearOpMode {
         rightBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
     }
 }
-*/
