@@ -1,11 +1,19 @@
 package org.firstinspires.ftc.teamcode;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
+
 public class PIDAngleControl {
     private double error, integral, derivative;
     private double desiredAngle;
     private double lastError = -1;
     private long lastTime = -1;
 
+//    Telemetry telemetry;
+//
+//    public PIDAngleControl(Telemetry telemetry) {
+//        this.telemetry = telemetry;
+//    }
+//
     public void startPID(double desiredAngle){
         this.desiredAngle = desiredAngle;
         error = integral = derivative = 0;
@@ -14,7 +22,12 @@ public class PIDAngleControl {
     }
 
     public double getValue(double kP,double kI, double kD,double mult) {
+        //telemetry.addData("P",mult * kP * error);
+        //telemetry.addData("I",mult * kI * integral);
+        //telemetry.addData("D",mult * kI * derivative);
+        //telemetry.update();
         return mult * ((kP * error) + (kI * integral) + (kD * derivative));
+
     }
 
     public void onSensorChanged(double currentAngle){

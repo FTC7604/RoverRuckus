@@ -4,6 +4,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.util.ReadWriteFile;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.internal.system.AppUtil;
 import java.io.File;
@@ -11,6 +12,7 @@ import static java.lang.Math.*;
 
 public class IMUControl {
 
+    private Telemetry telemetry;
     private PIDAngleControl PIDControl = new PIDAngleControl();
 
     private double positiveAngle(double angle) {
@@ -169,9 +171,9 @@ public class IMUControl {
         boolean angleCondition = false;
         boolean condidion = false;
 
-        if(rotation < 10 * precision)motorCondition = true;
+        if(abs(rotation) < 10 * precision)motorCondition = true;
         else motorCondition = false;
-        if(currentAngle < precision)angleCondition = true;
+        if(abs(currentAngle) < precision)angleCondition = true;
         else angleCondition = false;
 
         if(motorCondition && angleCondition) condidion = true;

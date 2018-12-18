@@ -306,7 +306,7 @@ public class test_imuTurn extends LinearOpMode{
 
         double beginTime = time;
         //imuTurn(turn,0.02);
-        imuTurn(turn,0.05);
+        imuTurn2(turn,0.05);
         double endTime = time;
 
 
@@ -353,13 +353,12 @@ public class test_imuTurn extends LinearOpMode{
     }
     void imuTurn2(double turnAngle, double precision){
         boolean condiditon = false;
-        double[] motors = new double[3];
+        double[] motors = new double[4];
         IMUControl.startIMUturn(turnAngle,imu1,imu2);
 
         do{
             IMUControl.IMUturn(motors, imu1,imu2);
             imputMecVelocity(motors);
-            condiditon = IMUControl.IMUturnCondidtion(precision);
-        }while(opModeIsActive() && condiditon);
+        }while(opModeIsActive() && IMUControl.IMUturnCondidtion(precision));
     }
 }
