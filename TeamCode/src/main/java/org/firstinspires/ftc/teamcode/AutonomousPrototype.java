@@ -10,7 +10,6 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.teamcode.util.Crunchy;
 import org.firstinspires.ftc.teamcode.util.MotorControl;
 import org.firstinspires.ftc.teamcode.util.PropertiesLoader;
-import org.firstinspires.ftc.teamcode.util.MineralDetector;
 import org.firstinspires.ftc.teamcode.util.vision.VisionTarget;
 import org.firstinspires.ftc.teamcode.util.vision.VisionTracking;
 
@@ -27,7 +26,6 @@ public class AutonomousPrototype extends LinearOpMode
     private ElapsedTime runtime = new ElapsedTime();
     private Crunchy crunchy = new Crunchy();
     private MotorControl motorControl = new MotorControl();
-    private MineralDetector mineralDetector = new MineralDetector();
 
     private PropertiesLoader loader = new PropertiesLoader("AutonomousPrototype");
     private double hookOpen = loader.getDoubleProperty("hookOpen");
@@ -39,15 +37,24 @@ public class AutonomousPrototype extends LinearOpMode
     private double liftPower = loader.getDoubleProperty("liftPower");
     private double openPhone = loader.getDoubleProperty("openPhone");
     private double closedPhone = loader.getDoubleProperty("closedPhone");
-    private int mineralPosition = 0;
 
     private enum SamplePosition
     {
         LEFT, CENTER, RIGHT
     }
 
-    private SamplePosition detectSample() {
-        int mineralPosition = mineralDetector.detectMineral();
+    private SamplePosition detectSample(VisionTracking tracking) {
+        runtime.reset();
+        int mineralPosition = 0;
+
+        while ((mineralPosition == 0 || runtime.seconds() < 2) && opModeIsActive()) {
+            telemetry.clearAll();
+            telemetry.addLine("Looping " + getRuntime());
+            mineralPosition = tracking.detectMineral();
+            telemetry.update();
+        }
+
+        telemetry.clearAll();
 
         switch(mineralPosition){
             case 1:
@@ -109,31 +116,34 @@ public class AutonomousPrototype extends LinearOpMode
     @Override
     public void runOpMode()
     {
+        //Setting up all processes
         telemetry.addData("Status", "Initialized");
         telemetry.update();
         crunchy.mapHardware(this);
 
-        //final VisionTracking tracking = new VisionTracking(this);
-        //tracking.init();
+        final VisionTracking tracking = new VisionTracking(this);
+        tracking.init();
 
         crunchy.phoneMount.setPosition(closedPhone);
-        mineralDetector.mapHardware(this);
-        //Initiate tensor camera
+        tracking.initTfod();
 
         waitForStart();
 
+        //Autonomous code
         runtime.reset();
         telemetry.clearAll();
 
         crunchy.phoneMount.setPosition(openPhone);
 
-        SamplePosition mineralPosition = detectSample();
+        SamplePosition mineralPosition = detectSample(tracking);
+        tracking.shutdownTfod();
 
         crunchy.phoneMount.setPosition(closedPhone);
 
-        telemetry.clearAll();
         telemetry.addData("Sample position", mineralPosition);
         telemetry.update();
+
+        tracking.initVision();
 
         /*deploy();
 
