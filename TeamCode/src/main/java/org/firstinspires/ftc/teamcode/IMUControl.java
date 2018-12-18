@@ -11,7 +11,19 @@ import static java.lang.Math.*;
 
 public class IMUControl {
     //will convert an angle into a value that is greater than or equal to 0 and less than 2pi
-    private double calcAngle(double angle) {
+    private double betweenAngle(double angle,double difference) {
+        //a is the angle
+        //greater than or equal to 0
+        while (angle <= -difference) {
+            angle += 2 * PI;
+        }
+        //less than pi
+        while (angle >= difference) {
+            angle -= 2 * PI;
+        }
+        return angle;
+    }
+    private double positiveAngle(double angle) {
         //a is the angle
         //greater than or equal to 0
         while (angle < 0) {
@@ -32,7 +44,7 @@ public class IMUControl {
             smoothData[axis] = ((1 - fraction) * smoothData[axis]) + (fraction * newData[axis]);
             //prevents the data from remaining within the bounds
             if(restrict) {
-                smoothData[0] = calcAngle(smoothData[0]);
+                smoothData[0] = positiveAngle(smoothData[0]);
             }
         }
 
@@ -70,7 +82,6 @@ public class IMUControl {
                 x2 = 0;
                 y2 = 0;
             }
-            y2 *= -1;
         }
 
         imput[0] = x2;
@@ -79,24 +90,24 @@ public class IMUControl {
         return imput;
     }
 
-    private double desiredTurnPosition = 0;
     public double[] imuDrive(double[]output, double[] imput, double angle, boolean stabilize,boolean fieldCentric){
 
         //compensate(imput, angle);
 
+        double desiredTurnPosition;
         if(fieldCentric){
             compensate(imput,angle);
         }
         if(stabilize){
-            desiredTurnPosition += imput[2]/50;
+            desiredTurnPosition = angle + imput[2]/50;
             imput[2] = remainTurn(desiredTurnPosition,angle) * .5;
         }
 
         //adds the raw values
-        output[0] = (imput[1] - imput[0] + imput[2])/2;//leftFront
-        output[1] = (imput[1] + imput[0] + imput[2])/2;//leftBack
-        output[2] = (imput[1] + imput[0] - imput[2])/2;//rightFront
-        output[3] = (imput[1] - imput[0] - imput[2])/2;//rightBack
+        output[0] = (imput[1] - imput[0] + imput[2]);//leftFront
+        output[1] = (imput[1] + imput[0] + imput[2]);//leftBack
+        output[2] = (imput[1] + imput[0] - imput[2]);//rightFront
+        output[3] = (imput[1] - imput[0] - imput[2]);//rightBack
 
         return output;
     }
@@ -115,7 +126,7 @@ public class IMUControl {
             if (outputPosition[axis] - imputPosition[axis] > PI) imputPosition[axis] += 2 * PI;
         }
 
-        smooth(outputPosition, imputPosition, .75, restrict);
+        smooth(outputPosition, imputPosition, .8, restrict);
 
         return outputPosition;
     }
@@ -146,14 +157,14 @@ public class IMUControl {
         double[] position = new double[3];
 
         getPosition(position,imu1,imu2,false);
-        imputs[2] = remainTurn(desiredTurnPosition,position[0]) * .4;
+        imputs[2] = remainTurn(desiredTurnPosition,position[0]) * .0175;
 
         imuDrive(output,imputs,0,false,false);
         return output;
     }
     public double remainTurn(double desiredTurnPosition,double angle){
+        //raduis is the maximum value that the turn can be
+        return (angle - desiredTurnPosition);
 
-         return (angle - desiredTurnPosition);
     }
-
 }
