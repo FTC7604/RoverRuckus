@@ -11,6 +11,8 @@ import static java.lang.Math.*;
 
 public class IMUControl {
 
+    private PIDAngleControl PIDControl = new PIDAngleControl();
+
     private double positiveAngle(double angle) {
         /*All that this method does is convert this angle to something between 0 and 2PI, I don't want the robot to keep spinning around and I wouldn't be able to
         understand the meaning of the huge value. */
@@ -81,15 +83,11 @@ public class IMUControl {
 
     public double[] imuDrive(double[]output, double[] imput, double angle, boolean stabilize,boolean fieldCentric){
 
-        //compensate(imput, angle);
-
-        double desiredTurnPosition;
         if(fieldCentric){
             compensate(imput,angle);
         }
         if(stabilize){
-            desiredTurnPosition = angle + imput[2]/50;
-            imput[2] = remainTurn(desiredTurnPosition,angle) * .5;
+            stabilize(imput,angle);
         }
 
         //adds the raw values
@@ -141,20 +139,56 @@ public class IMUControl {
         ReadWriteFile.writeFile(file2, calibrationData2.serialize());
     }
 
-    public double[] turnIMU(double[]output,double desiredTurnPosition,BNO055IMU imu1,BNO055IMU imu2){
+    private double desiredAngle;
+    private double rotation;
+    private double currentAngle;
+
+    void startIMUturn(double turnAngle,BNO055IMU imu1,BNO055IMU imu2){
+        double[] position = new double[3];
+        getPosition(position,imu1,imu2,false);
+
+        this.desiredAngle = turnAngle + position[0];
+        PIDControl.startPID(desiredAngle);
+    }
+    double[] IMUturn(double[] motors,BNO055IMU imu1,BNO055IMU imu2){
         double[] imputs = new double[3];
         double[] position = new double[3];
 
         getPosition(position,imu1,imu2,false);
-        imputs[2] = remainTurn(desiredTurnPosition,position[0]) * .0175;
+        this.currentAngle = position[0];
 
-        imuDrive(output,imputs,0,false,false);
-        return output;
+        PIDControl.onSensorChanged(position[0]);
+        imputs[2] = PIDControl.getValue(2.9,1.6,.9,-.6);
+        this.rotation = imputs[2];
+
+        imuDrive(motors,imputs,0,false,false);
+        return motors;
     }
-    public double remainTurn(double desiredTurnPosition,double angle){
-        //raduis is the maximum value that the turn can be
-        return (angle - desiredTurnPosition);
+    boolean IMUturnCondidtion(double precision){
+        boolean motorCondition = false;
+        boolean angleCondition = false;
+        boolean condidion = false;
 
+        if(rotation < 10 * precision)motorCondition = true;
+        else motorCondition = false;
+        if(currentAngle < precision)angleCondition = true;
+        else angleCondition = false;
+
+        if(motorCondition && angleCondition) condidion = true;
+        else condidion = false;
+
+        return !condidion;
+    }
+
+    double[]stabilize(double[] imput, double angle){
+        this.desiredAngle += imput[2]/2;
+
+        PIDControl.startPID(desiredAngle);
+        PIDControl.onSensorChanged(angle);
+
+        imput[2] = PIDControl.getValue(2.9,1.6,.9,-.6);
+
+        return imput;
     }
 
 

@@ -170,7 +170,7 @@ public class IMUmecDrive extends LinearOpMode {
             telemetry.addData("start_controller_y", controller[1]);
 
             IMUControl.getPosition(position,imu1,imu2,true);
-            IMUControl.imuDrive(motors,controller,position[0],false,true);
+            IMUControl.imuDrive(motors,controller,position[0],true,false);
 
             imputMecMotors(motors);
 

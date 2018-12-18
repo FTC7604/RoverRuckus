@@ -305,7 +305,8 @@ public class test_imuTurn extends LinearOpMode{
         double turn = PI/2;
 
         double beginTime = time;
-        imuTurn(turn,0.02);
+        //imuTurn(turn,0.02);
+        imuTurn(turn,0.05);
         double endTime = time;
 
 
@@ -319,9 +320,6 @@ public class test_imuTurn extends LinearOpMode{
             telemetry.addData("It took too long",endTime - beginTime);
             telemetry.update();
         }
-
-
-
 
         //sleep(1000);
     }
@@ -347,10 +345,21 @@ public class test_imuTurn extends LinearOpMode{
             IMUControl.imuDrive(motors,imputs,0,false,false);
             imputMecVelocity(motors);
 
-            if(IMUControl.remainTurn(desiredTurnPosition,position[0]) < precision)angleCondition = true;
+            if(abs(desiredTurnPosition - position[0]) < precision)angleCondition = true;
             else angleCondition = false;
             if(abs(imputs[2]) < 10 * precision) motorCondition = true;
             else motorCondition = false;
         }while(opModeIsActive() && !(angleCondition && motorCondition));
+    }
+    void imuTurn2(double turnAngle, double precision){
+        boolean condiditon = false;
+        double[] motors = new double[3];
+        IMUControl.startIMUturn(turnAngle,imu1,imu2);
+
+        do{
+            IMUControl.IMUturn(motors, imu1,imu2);
+            imputMecVelocity(motors);
+            condiditon = IMUControl.IMUturnCondidtion(precision);
+        }while(opModeIsActive() && condiditon);
     }
 }

@@ -14,7 +14,7 @@ public class PIDAngleControl {
     }
 
     public double getValue(double kP,double kI, double kD,double mult) {
-        return mult * -1 *((kP * error) + (kI * integral) + (kD * derivative));
+        return mult * ((kP * error) + (kI * integral) + (kD * derivative));
     }
 
     public void onSensorChanged(double currentAngle){
