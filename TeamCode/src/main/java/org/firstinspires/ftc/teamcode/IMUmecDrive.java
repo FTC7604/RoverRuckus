@@ -34,17 +34,11 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import static java.lang.Math.*;
 import com.qualcomm.hardware.bosch.BNO055IMU;
-import com.qualcomm.robotcore.util.ReadWriteFile;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.internal.system.AppUtil;
-
-import java.io.File;
 
 @TeleOp(name="Mechanum 5.0", group="Linear Opmode")
 //@Disabled
@@ -174,7 +168,6 @@ public class IMUmecDrive extends LinearOpMode {
 
             telemetry.addData("start_controller_x", controller[0]);
             telemetry.addData("start_controller_y", controller[1]);
-
 
             IMUControl.getPosition(position,imu1,imu2,true);
             IMUControl.imuDrive(motors,controller,position[0],false,true);

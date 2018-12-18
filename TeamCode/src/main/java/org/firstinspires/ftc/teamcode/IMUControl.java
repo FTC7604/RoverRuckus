@@ -1,43 +1,32 @@
 package org.firstinspires.ftc.teamcode;
-
 import com.qualcomm.hardware.bosch.BNO055IMU;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.util.ReadWriteFile;
 
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.internal.system.AppUtil;
-
 import java.io.File;
-
 import static java.lang.Math.*;
 
 public class IMUControl {
-    //will convert an angle into a value that is greater than or equal to 0 and less than 2pi
-    private double betweenAngle(double angle,double difference) {
-        //a is the angle
-        //greater than or equal to 0
-        while (angle <= -difference) {
-            angle += 2 * PI;
-        }
-        //less than pi
-        while (angle >= difference) {
-            angle -= 2 * PI;
-        }
-        return angle;
-    }
+
     private double positiveAngle(double angle) {
-        //a is the angle
-        //greater than or equal to 0
+        /*All that this method does is convert this angle to something between 0 and 2PI, I don't want the robot to keep spinning around and I wouldn't be able to
+        understand the meaning of the huge value. */
+
+        //while the angle is less than 0, add 2 PI
         while (angle < 0) {
             angle += 2 * PI;
         }
-        //less than pi
+        //while its greater than 2PI, subtract PI
         while (angle >= 2 * PI) {
             angle -= 2 * PI;
         }
+
         return angle;
     }
-
-    //smooths data
-    public double[] smooth(double[] smoothData, double[] newData, double fraction, boolean restrict) {
+    private double[] smooth(double[] smoothData, double[] newData, double fraction, boolean restrict) {
 
         for (int axis = 2; axis > -1; axis--) {
             //smooths the data
@@ -54,7 +43,7 @@ public class IMUControl {
 
     public double[] compensate(double[] imput, double angle) {
         double x1 = imput[0];
-        double y1 = imput[1];
+        double y1 = -1 * imput[1];
 
         double x2 = 0;
         double y2 = 0;
@@ -85,7 +74,7 @@ public class IMUControl {
         }
 
         imput[0] = x2;
-        imput[1] = y2;
+        imput[1] = -1 * y2;
 
         return imput;
     }
@@ -167,4 +156,6 @@ public class IMUControl {
         return (angle - desiredTurnPosition);
 
     }
+
+
 }
