@@ -35,15 +35,38 @@ public class AutonomousPrototype extends LinearOpMode
     private double roDown = 1 - loDown;
     private double roUp = 1 - loUp;
     private double liftPower = loader.getDoubleProperty("liftPower");
+    private double openPhone = loader.getDoubleProperty("openPhone");
+    private double closedPhone = loader.getDoubleProperty("closedPhone");
 
     private enum SamplePosition
     {
         LEFT, CENTER, RIGHT
     }
 
-    private SamplePosition detectSample()
-    {
-        return SamplePosition.LEFT;
+    private SamplePosition detectSample(VisionTracking tracking) {
+        runtime.reset();
+        int mineralPosition = 0;
+
+        while ((mineralPosition == 0 || runtime.seconds() < 2) && opModeIsActive()) {
+            telemetry.clearAll();
+            telemetry.addLine("Looping " + getRuntime());
+            mineralPosition = tracking.detectMineral();
+            telemetry.update();
+        }
+
+        telemetry.clearAll();
+
+        switch(mineralPosition){
+            case 1:
+                return SamplePosition.LEFT;
+            case 2:
+                return SamplePosition.CENTER;
+            case 3:
+                return SamplePosition.RIGHT;
+            default:
+                telemetry.addLine("Error while detecting");
+                return SamplePosition.CENTER;
+        }
     }
 
     //Movement methods
@@ -93,6 +116,7 @@ public class AutonomousPrototype extends LinearOpMode
     @Override
     public void runOpMode()
     {
+        //Setting up all processes
         telemetry.addData("Status", "Initialized");
         telemetry.update();
         crunchy.mapHardware(this);
@@ -100,20 +124,34 @@ public class AutonomousPrototype extends LinearOpMode
         final VisionTracking tracking = new VisionTracking(this);
         tracking.init();
 
+        crunchy.phoneMount.setPosition(closedPhone);
+        tracking.initTfod();
+
         waitForStart();
 
+        //Autonomous code
         runtime.reset();
         telemetry.clearAll();
 
-        deploy();
+        crunchy.phoneMount.setPosition(openPhone);
+
+        SamplePosition mineralPosition = detectSample(tracking);
+        tracking.shutdownTfod();
+
+        crunchy.phoneMount.setPosition(closedPhone);
+
+        telemetry.addData("Sample position", mineralPosition);
+        telemetry.update();
+
+        tracking.initVision();
+
+        /*deploy();
 
         crunchy.hook.setPosition(hookOpen);
 
         crunchy.drive(0.5, 0.5, 0.5, 0.5);
         motorControl.waitForDistance(crunchy.frontLeft, 950);
         crunchy.stop();
-
-        SamplePosition mineralPosition = detectSample();
 
         while (opModeIsActive())
         {
@@ -134,7 +172,7 @@ public class AutonomousPrototype extends LinearOpMode
 
         telemetry.clearAll();
         telemetry.addLine("This thing is done");
-        telemetry.update();
+        telemetry.update();*/
 
         sleep(1000);
     }
