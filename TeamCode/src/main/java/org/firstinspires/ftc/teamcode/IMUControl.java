@@ -1,38 +1,43 @@
 package org.firstinspires.ftc.teamcode;
-
 import com.qualcomm.hardware.bosch.BNO055IMU;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.util.ReadWriteFile;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.internal.system.AppUtil;
-
 import java.io.File;
-
 import static java.lang.Math.*;
 
 public class IMUControl {
-    //will convert an angle into a value that is greater than or equal to 0 and less than 2pi
-    private double calcAngle(double angle) {
-        //a is the angle
-        //greater than or equal to 0
+
+    private Telemetry telemetry;
+    private PIDAngleControl PIDControl = new PIDAngleControl();
+
+    private double positiveAngle(double angle) {
+        /*All that this method does is convert this angle to something between 0 and 2PI, I don't want the robot to keep spinning around and I wouldn't be able to
+        understand the meaning of the huge value. */
+
+        //while the angle is less than 0, add 2 PI
         while (angle < 0) {
             angle += 2 * PI;
         }
-        //less than pi
+        //while its greater than 2PI, subtract PI
         while (angle >= 2 * PI) {
             angle -= 2 * PI;
         }
+
         return angle;
     }
-
-    //smooths data
-    public double[] smooth(double[] smoothData, double[] newData, double fraction, boolean restrict) {
+    private double[] smooth(double[] smoothData, double[] newData, double fraction, boolean restrict) {
 
         for (int axis = 2; axis > -1; axis--) {
             //smooths the data
             smoothData[axis] = ((1 - fraction) * smoothData[axis]) + (fraction * newData[axis]);
             //prevents the data from remaining within the bounds
             if(restrict) {
-                smoothData[0] = calcAngle(smoothData[0]);
+                smoothData[0] = positiveAngle(smoothData[0]);
             }
         }
 
@@ -42,7 +47,7 @@ public class IMUControl {
 
     public double[] compensate(double[] imput, double angle) {
         double x1 = imput[0];
-        double y1 = imput[1];
+        double y1 = -1 * imput[1];
 
         double x2 = 0;
         double y2 = 0;
@@ -70,33 +75,28 @@ public class IMUControl {
                 x2 = 0;
                 y2 = 0;
             }
-            y2 *= -1;
         }
 
         imput[0] = x2;
-        imput[1] = y2;
+        imput[1] = -1 * y2;
 
         return imput;
     }
 
-    private double desiredTurnPosition = 0;
     public double[] imuDrive(double[]output, double[] imput, double angle, boolean stabilize,boolean fieldCentric){
-
-        //compensate(imput, angle);
 
         if(fieldCentric){
             compensate(imput,angle);
         }
         if(stabilize){
-            desiredTurnPosition += imput[2]/50;
-            imput[2] = remainTurn(desiredTurnPosition,angle) * .5;
+            stabilize(imput,angle);
         }
 
         //adds the raw values
-        output[0] = (imput[1] - imput[0] + imput[2])/2;//leftFront
-        output[1] = (imput[1] + imput[0] + imput[2])/2;//leftBack
-        output[2] = (imput[1] + imput[0] - imput[2])/2;//rightFront
-        output[3] = (imput[1] - imput[0] - imput[2])/2;//rightBack
+        output[0] = (imput[1] - imput[0] + imput[2]);//leftFront
+        output[1] = (imput[1] + imput[0] + imput[2]);//leftBack
+        output[2] = (imput[1] + imput[0] - imput[2]);//rightFront
+        output[3] = (imput[1] - imput[0] - imput[2]);//rightBack
 
         return output;
     }
@@ -115,7 +115,7 @@ public class IMUControl {
             if (outputPosition[axis] - imputPosition[axis] > PI) imputPosition[axis] += 2 * PI;
         }
 
-        smooth(outputPosition, imputPosition, .75, restrict);
+        smooth(outputPosition, imputPosition, .8, restrict);
 
         return outputPosition;
     }
@@ -141,19 +141,57 @@ public class IMUControl {
         ReadWriteFile.writeFile(file2, calibrationData2.serialize());
     }
 
-    public double[] turnIMU(double[]output,double desiredTurnPosition,BNO055IMU imu1,BNO055IMU imu2){
+    private double desiredAngle;
+    private double rotation;
+    private double currentAngle;
+
+    void startIMUturn(double turnAngle,BNO055IMU imu1,BNO055IMU imu2){
+        double[] position = new double[3];
+        getPosition(position,imu1,imu2,false);
+
+        this.desiredAngle = turnAngle + position[0];
+        PIDControl.startPID(desiredAngle);
+    }
+    double[] IMUturn(double[] motors,BNO055IMU imu1,BNO055IMU imu2){
         double[] imputs = new double[3];
         double[] position = new double[3];
 
         getPosition(position,imu1,imu2,false);
-        imputs[2] = remainTurn(desiredTurnPosition,position[0]) * .4;
+        this.currentAngle = position[0];
 
-        imuDrive(output,imputs,0,false,false);
-        return output;
-    }
-    public double remainTurn(double desiredTurnPosition,double angle){
+        PIDControl.onSensorChanged(position[0]);
+        imputs[2] = PIDControl.getValue(2.9,1.6,.9,-.6);
+        this.rotation = imputs[2];
 
-         return (angle - desiredTurnPosition);
+        imuDrive(motors,imputs,0,false,false);
+        return motors;
     }
+    boolean IMUturnCondidtion(double precision){
+        boolean motorCondition = false;
+        boolean angleCondition = false;
+        boolean condidion = false;
+
+        if(abs(rotation) < 10 * precision)motorCondition = true;
+        else motorCondition = false;
+        if(abs(currentAngle) < precision)angleCondition = true;
+        else angleCondition = false;
+
+        if(motorCondition && angleCondition) condidion = true;
+        else condidion = false;
+
+        return !condidion;
+    }
+
+    double[]stabilize(double[] imput, double angle){
+        this.desiredAngle += imput[2]/2;
+
+        PIDControl.startPID(desiredAngle);
+        PIDControl.onSensorChanged(angle);
+
+        imput[2] = PIDControl.getValue(2.9,1.6,.9,-.6);
+
+        return imput;
+    }
+
 
 }
