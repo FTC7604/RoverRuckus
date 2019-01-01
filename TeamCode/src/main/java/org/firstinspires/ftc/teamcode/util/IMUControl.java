@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.util;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
@@ -7,6 +7,8 @@ import com.qualcomm.robotcore.util.ReadWriteFile;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.internal.system.AppUtil;
+import org.firstinspires.ftc.teamcode.PIDAngleControl;
+
 import java.io.File;
 import static java.lang.Math.*;
 
@@ -145,14 +147,14 @@ public class IMUControl {
     private double rotation;
     private double currentAngle;
 
-    void startIMUturn(double turnAngle,BNO055IMU imu1,BNO055IMU imu2){
+    public void startIMUturn(double turnAngle,BNO055IMU imu1,BNO055IMU imu2){
         double[] position = new double[3];
         getPosition(position,imu1,imu2,false);
 
         this.desiredAngle = turnAngle + position[0];
         PIDControl.startPID(desiredAngle);
     }
-    double[] IMUturn(double[] motors,BNO055IMU imu1,BNO055IMU imu2){
+    public double[] IMUturn(double[] motors,BNO055IMU imu1,BNO055IMU imu2){
         double[] imputs = new double[3];
         double[] position = new double[3];
 
@@ -166,7 +168,7 @@ public class IMUControl {
         imuDrive(motors,imputs,0,false,false);
         return motors;
     }
-    boolean IMUturnCondidtion(double precision){
+    public boolean IMUturnCondidtion(double precision){
         boolean motorCondition = false;
         boolean angleCondition = false;
         boolean condidion = false;
@@ -182,7 +184,7 @@ public class IMUControl {
         return !condidion;
     }
 
-    double[]stabilize(double[] imput, double angle){
+    public double[]stabilize(double[] imput, double angle){
         this.desiredAngle += imput[2]/2;
 
         PIDControl.startPID(desiredAngle);

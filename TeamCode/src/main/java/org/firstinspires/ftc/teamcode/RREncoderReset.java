@@ -272,7 +272,7 @@ public class RREncoderReset extends LinearOpMode {
         leftLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         rightLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        //makes it stop when the motor is at rest
+        //makes it stopAndResetEncoders when the motor is at rest
         intakeLift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         leftLift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         rightLift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);

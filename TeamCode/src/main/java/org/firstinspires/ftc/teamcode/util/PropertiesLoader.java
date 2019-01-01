@@ -31,9 +31,18 @@ public class PropertiesLoader
         }
     }
 
+    public boolean getBooleanProperty(String name) {
+        return Boolean.parseBoolean(getStringProperty(name));
+    }
+
     public int getIntegerProperty(String name)
     {
         return Integer.parseInt(getStringProperty(name));
+    }
+
+    public long getLongProperty(String name)
+    {
+        return Long.parseLong(getStringProperty(name));
     }
 
     public float getFloatProperty(String name)

@@ -40,6 +40,10 @@ import com.qualcomm.robotcore.hardware.TouchSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.util.PropertiesLoader;
+import org.firstinspires.ftc.teamcode.util.vision.VisionTarget;
+import org.firstinspires.ftc.teamcode.util.vision.VisionTracking;
+
+import java.util.Locale;
 
 import static java.lang.Math.abs;
 
@@ -79,7 +83,10 @@ public class RRFullTeleop extends LinearOpMode {
     private boolean intakePrevState = false;
 
     private PropertiesLoader loader = new PropertiesLoader("RRFullTeleop");
+    private PropertiesLoader robotLoader = new PropertiesLoader("Crunchy");
     private final double SLOW_MULTIPLIER = loader.getDoubleProperty("slowMultiplier");
+    private final boolean DISPLAY_TARGET_INFO = loader.getBooleanProperty("displayTargetInfo");
+    private final double OPEN_PHONE = robotLoader.getDoubleProperty("openPhone");
 
     @Override
     public void runOpMode() {
@@ -103,16 +110,22 @@ public class RRFullTeleop extends LinearOpMode {
         leftOutput = hardwareMap.get(Servo.class, "lo");
         rightOutput = hardwareMap.get(Servo.class, "ro");
 
+        VisionTracking tracking = new VisionTracking(this);
+        tracking.init();
+        tracking.initVision();
         setMotorBehaviors();
 
         waitForStart();
         runtime.reset();
 
+        if(DISPLAY_TARGET_INFO) {
+            phoneMount.setPosition(OPEN_PHONE);
+        }
 
         while (opModeIsActive()) {
 
-            //intake.setPower(gamepad2.right_stick_y);
-            runIntake();
+            intake.setPower(gamepad2.right_stick_y);
+//            runIntake();
             
             RunIntakeLift();
 
@@ -125,6 +138,21 @@ public class RRFullTeleop extends LinearOpMode {
             RunScoringBucket();
 
             RunHook();
+
+            if(DISPLAY_TARGET_INFO)
+            {
+                tracking.updateTracking();
+                for (VisionTarget target : tracking.getTrackingInfo())
+                {
+                    String targetString = String.format(Locale.US,
+                            "translation: [%f, %f, %f], rotation: [%f, %f, %f], age: %d",
+                            target.translationX, target.translationY, target.translationZ,
+                            target.yaw, target.pitch, target.roll,
+                            target.age);
+
+                    telemetry.addData(target.name, targetString);
+                }
+            }
 
             telemetry.addData("intake lift", intakeLift.getCurrentPosition());
             telemetry.addData("Encoder Position", leftLift.getCurrentPosition());
@@ -284,9 +312,9 @@ public class RRFullTeleop extends LinearOpMode {
         double hookEngaged = 0.6;
 
         //this block of code controls the position of the hook with a toggle switch.
-        hookCurrState = gamepad2.b;
-        //toggle the hook position with gamepad2.b
-        if ((gamepad2.b) && hookCurrState != hookPrevState){
+        hookCurrState = gamepad2.y;
+        //toggle the hook position with gamepad2.y
+        if ((gamepad2.y) && hookCurrState != hookPrevState){
             hookIsOpen = !hookIsOpen;//change the hook target
         }
         hookPrevState = hookCurrState;
@@ -308,7 +336,7 @@ public class RRFullTeleop extends LinearOpMode {
         leftLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         rightLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        //makes it stop when the motor is at rest
+        //makes it stopAndResetEncoders when the motor is at rest
         //intake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         intakeLift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         leftLift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);

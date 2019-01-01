@@ -30,6 +30,18 @@ public class PIDAngleControl {
 
     }
 
+    public double getError() {
+        return error;
+    }
+
+    public double getIntegral() {
+        return integral;
+    }
+
+    public double getDerivative() {
+        return derivative;
+    }
+
     public void onSensorChanged(double currentAngle){
         long currentTime = System.currentTimeMillis();
         double elapsedTime = 0.001f * (currentTime - lastTime);
