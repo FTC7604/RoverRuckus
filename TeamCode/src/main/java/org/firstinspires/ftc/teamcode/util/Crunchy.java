@@ -141,18 +141,26 @@ public class Crunchy
         ReadWriteFile.writeFile(file2, calibrationData2.serialize());
     }
 
+    private double getDriveEncoderValue()
+    {
+        int fl = abs(frontLeft.getCurrentPosition());
+        int fr = abs(frontRight.getCurrentPosition());
+        int bl = abs(backLeft.getCurrentPosition());
+        int br = abs(backRight.getCurrentPosition());
+
+        return (fl + fr + bl + br) / 4.0;
+    }
+
     public void driveForwardForDistance(double power, int distance)
     {
         stopAndResetEncoders();
         power *= signum(distance);
         distance = abs(distance);
 
-        int currentPosition;
-
-        //noinspection StatementWithEmptyBody
-        while (opMode.ensureOpModeIsActive() && (currentPosition = abs(frontLeft.getCurrentPosition())) < distance)
+        double currentPosition;
+        while (opMode.ensureOpModeIsActive() && (currentPosition = getDriveEncoderValue()) < distance)
         {
-            int remaining = distance - currentPosition;
+            double remaining = distance - currentPosition;
             double ratio = (remaining + distance) / (2.0 * distance);
             drive(power * ratio);
         }
@@ -166,20 +174,15 @@ public class Crunchy
         power *= signum(distance);
         distance = abs(distance);
 
-        int currentPosition;
+        double x = -power * abs(power);
 
-        double x = power * power * signum(power);
-
-        //noinspection StatementWithEmptyBody
-        while (opMode.ensureOpModeIsActive() && (currentPosition = abs(frontLeft.getCurrentPosition())) < distance)
+        double currentPosition;
+        while (opMode.ensureOpModeIsActive() && (currentPosition = getDriveEncoderValue()) < distance)
         {
-            int remaining = distance - currentPosition;
+            double remaining = distance - currentPosition;
             double ratio = (remaining + distance) / (2.0 * distance);
-            drive(power * ratio);
-
             double val = x * ratio;
-
-            drive(val, -val, -val, val);
+            drive(-val, val, val, -val);
         }
         stopAndResetEncoders();
     }
@@ -227,7 +230,7 @@ public class Crunchy
         };
     }
 
-    /* Default turn direction is right (clockwise) */
+    /* Positive turn direction is right (clockwise) */
     public void turnDegrees(double turnAngle, double precision)
     {
         turnRadians(toRadians(turnAngle), toRadians(precision));

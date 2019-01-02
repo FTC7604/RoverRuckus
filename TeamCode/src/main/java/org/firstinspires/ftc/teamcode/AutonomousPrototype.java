@@ -20,29 +20,36 @@ public class AutonomousPrototype extends DWAILinearOpMode
     private final boolean STEP_MODE = loader.getBooleanProperty("stepMode");
     private final double LIFT_POWER = loader.getDoubleProperty("liftPower");
     private final double TURN_PRECISION_DEGREES = loader.getDoubleProperty("turnPrecisionDegrees");
+    private final int GOLD_POSITION = loader.getIntegerProperty("goldPosition");
+
     private final double RELEASE_AND_DRIVE_POWER = loader.getDoubleProperty("releaseAndDrivePower");
     private final int RELEASE_AND_DRIVE_DISTANCE = loader.getIntegerProperty("releaseAndDriveDistance");
     private final long DISPENSE_WAIT_TIME = loader.getLongProperty("dispenseWaitTime");
 
-    private final double LEFT_BRANCH_ROTATE_ANGLE = loader.getDoubleProperty("leftBranchRotateAngle");
-    private final double LEFT_BRANCH_ALIGN_WITH_DEPOT_POWER = loader.getDoubleProperty("leftBranchAlignWithDepotPower");
-    private final int LEFT_BRANCH_ALIGN_WITH_DEPOT_DISTANCE = loader.getIntegerProperty("leftBranchAlignWithDepotDistance");
+    private final double LEFT_BRANCH_STRAFE_TO_BALL_POWER = loader.getDoubleProperty("leftBranchStrafeToBallPower");
+    private final int LEFT_BRANCH_STRAFE_TO_BALL_DISTANCE = loader.getIntegerProperty("leftBranchStrafeToBallDistance");
+    private final double LEFT_BRANCH_HIT_BALL_POWER = loader.getDoubleProperty("leftBranchHitBallPower");
+    private final int LEFT_BRANCH_HIT_BALL_DISTANCE = loader.getIntegerProperty("leftBranchHitBallDistance");
     private final double LEFT_BRANCH_TURN_TOWARDS_DEPOT_ANGLE = loader.getDoubleProperty("leftBranchTurnTowardsDepotAngle");
     private final double LEFT_BRANCH_DRIVE_TOWARDS_DEPOT_POWER = loader.getDoubleProperty("leftBranchDriveTowardsDepotPower");
     private final int LEFT_BRANCH_DRIVE_TOWARDS_DEPOT_DISTANCE = loader.getIntegerProperty("leftBranchDriveTowardsDepotDistance");
 
-    private final double RIGHT_BRANCH_ROTATE_ANGLE = loader.getDoubleProperty("rightBranchRotateAngle");
-    private final double RIGHT_BRANCH_ALIGN_WITH_BALL_POWER = loader.getDoubleProperty("rightBranchAlignWithBallPower");
-    private final int RIGHT_BRANCH_ALIGN_WITH_BALL_DISTANCE = loader.getIntegerProperty("rightBranchAlignWithBallDistance");
-    private final double RIGHT_BRANCH_TURN_TOWARDS_BALL_ANGLE = loader.getDoubleProperty("rightBranchTurnTowardsBallAngle");
-    private final double RIGHT_BRANCH_COLLECT_BALL_POWER = loader.getDoubleProperty("rightBranchCollectBallPower");
-    private final int RIGHT_BRANCH_COLLECT_BALL_DISTANCE = loader.getIntegerProperty("rightBranchCollectBallDistance");
-    private final double RIGHT_BRANCH_TURN_TOWARDS_DEPOT_ANGLE = loader.getDoubleProperty("rightBranchTurnTowardsDepotAngle");
-    private final double RIGHT_BRANCH_DRIVE_TOWARDS_DEPOT_POWER = loader.getDoubleProperty("rightBranchDriveTowardsDepotPower");
-    private final int RIGHT_BRANCH_DRIVE_TOWARDS_DEPOT_DISTANCE = loader.getIntegerProperty("rightBranchDriveTowardsDepotDistance");
-    private final double RIGHT_BRANCH_TURN_TOWARDS_CRATER_ANGLE = loader.getDoubleProperty("rightBranchTurnTowardsCraterAngle");
-    private final double RIGHT_BRANCH_DRIVE_TOWARDS_CRATER_POWER = loader.getDoubleProperty("rightBranchDriveTowardsCraterPower");
-    private final int RIGHT_BRANCH_DRIVE_TOWARDS_CRATER_DISTANCE = loader.getIntegerProperty("rightBranchDriveTowardsCraterDistance");
+    private final double CENTER_BRANCH_STRAFE_TO_BALL_POWER = loader.getDoubleProperty("centerBranchStrafeToBallPower");
+    private final int CENTER_BRANCH_STRAFE_TO_BALL_DISTANCE = loader.getIntegerProperty("centerBranchStrafeToBallDistance");
+    private final double CENTER_BRANCH_HIT_BALL_POWER = loader.getDoubleProperty("centerBranchHitBallPower");
+    private final int CENTER_BRANCH_HIT_BALL_DISTANCE = loader.getIntegerProperty("centerBranchHitBallDistance");
+    private final double CENTER_BRANCH_TURN_TOWARDS_DEPOT_ANGLE = loader.getDoubleProperty("centerBranchTurnTowardsDepotAngle");
+
+    private final double RIGHT_BRANCH_STRAFE_TO_BALL_POWER = loader.getDoubleProperty("rightBranchStrafeToBallPower");
+    private final int RIGHT_BRANCH_STRAFE_TO_BALL_DISTANCE = loader.getIntegerProperty("rightBranchStrafeToBallDistance");
+    private final double RIGHT_BRANCH_HIT_BALL_POWER = loader.getDoubleProperty("rightBranchHitBallPower");
+    private final int RIGHT_BRANCH_HIT_BALL_DISTANCE = loader.getIntegerProperty("rightBranchHitBallDistance");
+    private final double RIGHT_BRANCH_TURN_TOWARDS_WALL_ANGLE = loader.getDoubleProperty("rightBranchTurnTowardsWallAngle");
+    private final double RIGHT_BRANCH_STRAFE_TOWARDS_DEPOT_POWER = loader.getDoubleProperty("rightBranchStrafeTowardsDepotPower");
+    private final int RIGHT_BRANCH_STRAFE_TOWARDS_DEPOT_DISTANCE = loader.getIntegerProperty("rightBranchStrafeTowardsDepotDistance");
+
+    private final double DRIVE_TOWARDS_CRATER_POWER = loader.getDoubleProperty("driveTowardsCraterPower");
+    private final int DRIVE_TOWARDS_CRATER_DISTANCE = loader.getIntegerProperty("driveTowardsCraterDistance");
 
     private enum SamplePosition
     {
@@ -80,7 +87,22 @@ public class AutonomousPrototype extends DWAILinearOpMode
         step("Image detection");
         crunchy.phoneMount.setPosition(crunchy.OPEN_PHONE);
 
-        SamplePosition mineralPosition = detectSample(tracking);
+        SamplePosition mineralPosition;
+        switch (GOLD_POSITION)
+        {
+            case 1:
+                mineralPosition = SamplePosition.LEFT;
+                break;
+            case 2:
+                mineralPosition = SamplePosition.CENTER;
+                break;
+            case 3:
+                mineralPosition = SamplePosition.RIGHT;
+                break;
+            default:
+                mineralPosition = detectSample(tracking);
+                break;
+        }
         tracking.shutdownTfod();
 
         crunchy.phoneMount.setPosition(crunchy.CLOSED_PHONE);
@@ -88,7 +110,7 @@ public class AutonomousPrototype extends DWAILinearOpMode
         telemetry.addData("Sample position", mineralPosition);
         telemetry.update();
 
-        step("Deploy");
+        step(String.format("Detected %s - Deploy", mineralPosition.name()));
         deploy();
 
         step("Release and drive");
@@ -98,41 +120,48 @@ public class AutonomousPrototype extends DWAILinearOpMode
         switch (mineralPosition)
         {
             case LEFT:
-                step("[Left Branch] Rotate");
-                crunchy.turnDegrees(LEFT_BRANCH_ROTATE_ANGLE, TURN_PRECISION_DEGREES);
-                step("[Left Branch] Align with depot");
-                crunchy.driveForwardForDistance(LEFT_BRANCH_ALIGN_WITH_DEPOT_POWER, LEFT_BRANCH_ALIGN_WITH_DEPOT_DISTANCE);
+                step("[Left Branch] Strafe to ball");
+                crunchy.strafeRightForDistance(LEFT_BRANCH_STRAFE_TO_BALL_POWER, LEFT_BRANCH_STRAFE_TO_BALL_DISTANCE);
+                step("[Left Branch] Hit ball");
+                crunchy.driveForwardForDistance(LEFT_BRANCH_HIT_BALL_POWER, LEFT_BRANCH_HIT_BALL_DISTANCE);
                 step("[Left Branch] Turn towards depot");
                 crunchy.turnDegrees(LEFT_BRANCH_TURN_TOWARDS_DEPOT_ANGLE, TURN_PRECISION_DEGREES);
                 step("[Left Branch] Drive towards depot");
                 crunchy.driveForwardForDistance(LEFT_BRANCH_DRIVE_TOWARDS_DEPOT_POWER, LEFT_BRANCH_DRIVE_TOWARDS_DEPOT_DISTANCE);
-                dispense();
                 break;
             case CENTER:
+                step("[Center Branch] Strafe to ball");
+                crunchy.strafeRightForDistance(CENTER_BRANCH_STRAFE_TO_BALL_POWER, CENTER_BRANCH_STRAFE_TO_BALL_DISTANCE);
+                step("[Center Branch] Hit ball");
+                crunchy.driveForwardForDistance(CENTER_BRANCH_HIT_BALL_POWER, CENTER_BRANCH_HIT_BALL_DISTANCE);
+                step("[Center Branch] Turn towards depot");
+                crunchy.turnDegrees(CENTER_BRANCH_TURN_TOWARDS_DEPOT_ANGLE, TURN_PRECISION_DEGREES);
                 break;
             case RIGHT:
-                step("[Right Branch] Rotate");
-                crunchy.turnDegrees(RIGHT_BRANCH_ROTATE_ANGLE, TURN_PRECISION_DEGREES);
-                step("[Right Branch] Align with ball");
-                crunchy.driveForwardForDistance(RIGHT_BRANCH_ALIGN_WITH_BALL_POWER, RIGHT_BRANCH_ALIGN_WITH_BALL_DISTANCE);
-                step("[Right Branch] Turn towards ball");
-                crunchy.turnDegrees(RIGHT_BRANCH_TURN_TOWARDS_BALL_ANGLE, TURN_PRECISION_DEGREES);
-                step("[Right Branch] Collect ball");
-                // intake(true);
-                crunchy.driveForwardForDistance(RIGHT_BRANCH_COLLECT_BALL_POWER, RIGHT_BRANCH_COLLECT_BALL_DISTANCE);
-                // intake(false);
-                step("[Right Branch] Turn towards depot");
-                crunchy.turnDegrees(RIGHT_BRANCH_TURN_TOWARDS_DEPOT_ANGLE, TURN_PRECISION_DEGREES);
-                step("[Right Branch] Drive towards depot");
-                crunchy.driveForwardForDistance(RIGHT_BRANCH_DRIVE_TOWARDS_DEPOT_POWER, RIGHT_BRANCH_DRIVE_TOWARDS_DEPOT_DISTANCE);
-                step("[Right Branch] Turn towards crater");
-                crunchy.turnDegrees(RIGHT_BRANCH_TURN_TOWARDS_CRATER_ANGLE, TURN_PRECISION_DEGREES);
-                dispense();
-                step("[Right Branch] Drive towards crater");
-                crunchy.driveForwardForDistance(RIGHT_BRANCH_DRIVE_TOWARDS_CRATER_POWER, RIGHT_BRANCH_DRIVE_TOWARDS_CRATER_DISTANCE);
+                step("[Right Branch] Strafe to ball");
+                crunchy.strafeRightForDistance(RIGHT_BRANCH_STRAFE_TO_BALL_POWER, RIGHT_BRANCH_STRAFE_TO_BALL_DISTANCE);
+                step("[Right Branch] Hit ball");
+                crunchy.driveForwardForDistance(RIGHT_BRANCH_HIT_BALL_POWER, RIGHT_BRANCH_HIT_BALL_DISTANCE);
+                step("[Right Branch] Turn towards wall");
+                crunchy.turnDegrees(RIGHT_BRANCH_TURN_TOWARDS_WALL_ANGLE, TURN_PRECISION_DEGREES);
+                step("[Right Branch] Strafe towards depot");
+                crunchy.strafeRightForDistance(RIGHT_BRANCH_STRAFE_TOWARDS_DEPOT_POWER, RIGHT_BRANCH_STRAFE_TOWARDS_DEPOT_DISTANCE);
                 break;
         }
 
+        step("Dispense");
+        dispense();
+
+        step("Drive towards crater");
+        // TODO: lower intake lift while driving
+        final int intakeLowerLimit = -1500;
+        while(ensureOpModeIsActive() && (crunchy.intakeLift.getCurrentPosition() > intakeLowerLimit))
+        {
+            crunchy.intakeLift.setPower(1);
+        }
+
+        crunchy.intakeLift.setPower(0);
+        crunchy.driveForwardForDistance(DRIVE_TOWARDS_CRATER_POWER, DRIVE_TOWARDS_CRATER_DISTANCE);
 
         telemetry.addLine("This thing is done");
         telemetry.update();
@@ -205,7 +234,6 @@ public class AutonomousPrototype extends DWAILinearOpMode
             } else
             {
                 crunchy.intakeLift.setPower(0);
-                sleep(500);
                 return;
             }
         }
