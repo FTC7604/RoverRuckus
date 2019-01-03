@@ -46,6 +46,7 @@ import org.firstinspires.ftc.teamcode.util.vision.VisionTracking;
 import java.util.Locale;
 
 import static java.lang.Math.abs;
+import static java.lang.Math.signum;
 
 @TeleOp(name="RR Full Teleop", group="Linear Opmode")
 //@Disabled
@@ -254,15 +255,16 @@ public class RRFullTeleop extends LinearOpMode {
         double x = (((-gamepad1.left_stick_x)*(abs(-gamepad1.left_stick_x))+((-gamepad1.right_stick_x)*(abs(-gamepad1.right_stick_x))))/2);
         double turnVal = (((-gamepad1.left_stick_y)-(-gamepad1.right_stick_y))/2);
 
-        double multiplier = 1;
         if(gamepad1.right_bumper) {
-            multiplier = SLOW_MULTIPLIER;
+            y *= SLOW_MULTIPLIER;
+            x *= abs(SLOW_MULTIPLIER);
+            turnVal *= abs(SLOW_MULTIPLIER);
         }
 
-        leftFront.setPower(multiplier * (y-x+turnVal));
-        leftBack.setPower(multiplier * (y+x+turnVal));
-        rightFront.setPower(multiplier * (y+x-turnVal));
-        rightBack.setPower(multiplier * (y-x-turnVal));
+        leftFront.setPower(y-x+turnVal);
+        leftBack.setPower(y+x+turnVal);
+        rightFront.setPower(y+x-turnVal);
+        rightBack.setPower(y-x-turnVal);
 
         telemetry.addData("y", y);
         telemetry.addData("x", x);
