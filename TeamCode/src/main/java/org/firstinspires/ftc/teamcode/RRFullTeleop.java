@@ -82,7 +82,7 @@ public class RRFullTeleop extends LinearOpMode {
         telemetry.update();
 
         setMotorBehaviors();
-
+        
         waitForStart();
         runtime.reset();
 
