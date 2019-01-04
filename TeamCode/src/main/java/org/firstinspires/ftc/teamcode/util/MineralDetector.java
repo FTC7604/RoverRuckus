@@ -1,6 +1,8 @@
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.util;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.Servo;
@@ -13,29 +15,8 @@ import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer.Came
 import org.firstinspires.ftc.robotcore.external.tfod.TFObjectDetector;
 import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
 
-@Autonomous(name = "Tensor Test", group = "Linear Op")
-public class TensorTest extends LinearOpMode{
-    //Random variables
+public class MineralDetector {
     private ElapsedTime runtime = new ElapsedTime();
-    private final double openPhone = 0.80;
-    private final double closedPhone = 0.23;
-
-    //Hardware
-    private Servo phoneMount = null;
-
-    private void configureHardware(){
-        phoneMount = hardwareMap.get(Servo.class, "ph");
-    }
-
-    @Override
-    public void runOpMode() {
-        configureHardware();
-        int mineralPosition = flowTensor();
-
-        sleep(3000);
-    }
-
-    //Dirty Vuforia things
     private static final String TFOD_MODEL_ASSET = "RoverRuckus.tflite";
     private static final String LABEL_GOLD_MINERAL = "Gold Mineral";
     private static final String LABEL_SILVER_MINERAL = "Silver Mineral";
@@ -43,16 +24,17 @@ public class TensorTest extends LinearOpMode{
     private VuforiaLocalizer vuforia;
     private TFObjectDetector tfod;
 
-    private void initVuforia() {
+    public void mapHardware(OpMode opmode) {
+        mapHardware(opmode.hardwareMap);
+    }
+
+    public void mapHardware(HardwareMap hardwareMap){
         VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters();
         parameters.vuforiaLicenseKey = VUFORIA_KEY;
         parameters.cameraDirection = CameraDirection.BACK;
         vuforia = ClassFactory.getInstance().createVuforia(parameters);
-    }
 
-    private void initTfod() {
-        int tfodMonitorViewId = hardwareMap.appContext.getResources().getIdentifier(
-                "tfodMonitorViewId", "id", hardwareMap.appContext.getPackageName());
+        int tfodMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("tfodMonitorViewId", "id", hardwareMap.appContext.getPackageName());
         TFObjectDetector.Parameters tfodParameters = new TFObjectDetector.Parameters(tfodMonitorViewId);
         tfod = ClassFactory.getInstance().createTFObjectDetector(tfodParameters, vuforia);
         tfod.loadModelFromAsset(TFOD_MODEL_ASSET, LABEL_GOLD_MINERAL, LABEL_SILVER_MINERAL);
@@ -72,38 +54,20 @@ public class TensorTest extends LinearOpMode{
         }
     }
 
-    private int flowTensor(){
-        String mineralPositionString;
+    public int detectMineral(){
         int mineralPosition = 0;
         int goldMineralX = -1;
         int silverMineral1X = -1;
         int silverMineral2X = -1;
 
-        initVuforia();
-        phoneMount.setPosition(closedPhone);
-
-        if (ClassFactory.getInstance().canCreateTFObjectDetector()) {
-            initTfod();
-        } else {
-            telemetry.addData("Sorry!", "This device is not compatible with TFOD");
-        }
-
-        waitForStart();
-
-        if (tfod != null) {
-            tfod.activate();
-            phoneMount.setPosition(openPhone);
-        }
-
         runtime.reset();
 
-        while (opModeIsActive() && (mineralPosition == 0 || runtime.seconds() < 2)) {
+        while ((mineralPosition == 0 || runtime.seconds() < 2)) {
             if (tfod != null) {
                 List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
                 List<Recognition> validRecognitions = new ArrayList<>();
 
                 if (updatedRecognitions != null) {
-                    telemetry.addData("# Object Detected", updatedRecognitions.size());
 
                     sortArray(updatedRecognitions);
 
@@ -117,13 +81,10 @@ public class TensorTest extends LinearOpMode{
 
                             if (recognition.getLabel().equals(LABEL_GOLD_MINERAL)) {
                                 goldMineralX = (int) recognition.getTop();
-                                telemetry.addData("Gold Mineral 'Y' Value", (int) recognition.getLeft());
                             } else if (silverMineral1X == -1) {
                                 silverMineral1X = (int) recognition.getTop();
-                                telemetry.addData("Silver Mineral 'Y' Value", (int) recognition.getLeft());
                             } else {
                                 silverMineral2X = (int) recognition.getTop();
-                                telemetry.addData("Silver Mineral 'Y' Value", (int) recognition.getLeft());
                             }
 
                         }
@@ -131,53 +92,22 @@ public class TensorTest extends LinearOpMode{
                         if (goldMineralX != -1 && silverMineral1X != -1 && silverMineral2X != -1) {
 
                             if (goldMineralX < silverMineral1X && goldMineralX < silverMineral2X) {
-                                telemetry.addData("Gold Mineral Position", "Left");
                                 mineralPosition = 1;
                             } else if (goldMineralX > silverMineral1X && goldMineralX > silverMineral2X) {
-                                telemetry.addData("Gold Mineral Position", "Right");
                                 mineralPosition = 3;
                             } else {
-                                telemetry.addData("Gold Mineral Position", "Center");
                                 mineralPosition = 2;
                             }
 
                         }
 
                     }
-
-                    telemetry.update();
                 }
 
             }
-
-            telemetry.clearAll();
         }
 
-        if (tfod != null) {
-            tfod.shutdown();
-            phoneMount.setPosition(closedPhone);
-        }
-
-        switch(mineralPosition){
-            case 1:
-                mineralPositionString = "Left";
-                break;
-            case 2:
-                mineralPositionString = "Center";
-                break;
-            case 3:
-                mineralPositionString = "Right";
-                break;
-            default:
-                mineralPositionString = "Error while reading";
-                break;
-        }
-
-        telemetry.clearAll();
-        telemetry.addData("Mineral position", mineralPositionString);
-        telemetry.addData("Mineral position", mineralPosition);
-        telemetry.addData("Time", runtime.seconds());
-        telemetry.update();
+        tfod.shutdown();
 
         return mineralPosition;
     }

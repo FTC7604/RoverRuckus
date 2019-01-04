@@ -33,31 +33,111 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import static java.lang.Math.*;
 import com.qualcomm.hardware.bosch.BNO055IMU;
-import com.qualcomm.robotcore.util.ReadWriteFile;
-import org.firstinspires.ftc.robotcore.internal.system.AppUtil;
 
-import java.io.File;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.teamcode.util.IMUControl;
 
 @TeleOp(name="Mechanum 5.0", group="Linear Opmode")
 //@Disabled
 public class IMUmecDrive extends LinearOpMode {
 
-    private IMUControl IMUControl = new IMUControl();
+    private org.firstinspires.ftc.teamcode.util.IMUControl IMUControl = new IMUControl();
 
     private ElapsedTime runtime = new ElapsedTime();
 
     //creates the 4 motors
-    private DcMotor leftFront = null;
-    private DcMotor rightFront = null;
-    private DcMotor leftBack    = null;
-    private DcMotor rightBack   = null;
+    private DcMotorEx leftFront = null;
+    private DcMotorEx rightFront = null;
+    private DcMotorEx leftBack    = null;
+    private DcMotorEx rightBack   = null;
 
     //creates the imus
     private BNO055IMU imu1 = null;
     private BNO055IMU imu2 = null;
+
+    private void setUP(){
+        createHardwareMap();
+        setDirections();
+        setEncoders();
+        setBrakes();
+    }
+
+    private void createHardwareMap(){
+        //drivetrain
+        leftFront  = (DcMotorEx) hardwareMap.get(DcMotor.class, "lf");
+        rightFront = (DcMotorEx) hardwareMap.get(DcMotor.class, "rf");
+        leftBack = (DcMotorEx) hardwareMap.get(DcMotor.class, "lb");
+        rightBack = (DcMotorEx) hardwareMap.get(DcMotor.class, "rb");
+
+//        //output and intake
+//        leftLift = hardwareMap.get(DcMotor.class, "ll");
+//        rightLift = hardwareMap.get(DcMotor.class, "rl");
+//        intake = hardwareMap.get(DcMotor.class, "in");
+//        intakeLift = hardwareMap.get(DcMotor.class, "il");
+//
+//        //servos
+//        hook = hardwareMap.get(Servo.class, "hk");
+//        phoneMount = hardwareMap.get(Servo.class, "ph");
+//        sampleArm = hardwareMap.get(Servo.class, "sa");
+//        leftOutput = hardwareMap.get(Servo.class, "lo");
+//        rightOutput = hardwareMap.get(Servo.class, "ro");
+
+        //imus
+        imu1 = hardwareMap.get(BNO055IMU.class, "imu");
+        imu2 = hardwareMap.get(BNO055IMU.class, "imu 1");
+    }
+    private void setDirections(){
+//        //sets the direction for the lift
+//        leftLift.setDirection(DcMotor.Direction.FORWARD);
+//        rightLift.setDirection(DcMotor.Direction.REVERSE);
+//
+//        //sets the direction for the intake
+//        intake.setDirection(DcMotor.Direction.FORWARD);
+//        intakeLift.setDirection(DcMotor.Direction.FORWARD);
+
+        //sets the directioon for the drivetrain
+        leftFront.setDirection(DcMotor.Direction.REVERSE);
+        rightFront.setDirection(DcMotor.Direction.FORWARD);
+        leftBack.setDirection(DcMotor.Direction.REVERSE);
+        rightBack.setDirection(DcMotor.Direction.FORWARD);
+    }
+    private void setEncoders(){
+//        //resets the aux encoders
+//        intakeLift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+//        leftLift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+//        rightLift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        //resets the drive encoders
+        leftFront.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightFront.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        leftBack.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightBack.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+//        //starts the aux encoders
+//        intakeLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+//        leftLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+//        rightLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        //resets the drive encoders
+        leftFront.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        rightFront.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        leftBack.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        rightBack.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+    }
+    private void setBrakes(){
+//        intake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+//        intakeLift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+//        leftLift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+//        rightLift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        leftFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        rightFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        leftBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        rightBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+    }
 
     //starts the Opmode
     @Override
@@ -66,21 +146,8 @@ public class IMUmecDrive extends LinearOpMode {
         telemetry.addData("Status", "Initialized");
         telemetry.update();
 
-        //creates the hardwaremap
-        leftFront  = hardwareMap.get(DcMotor.class, "lf");
-        rightFront = hardwareMap.get(DcMotor.class, "rf");
-        leftBack = hardwareMap.get(DcMotor.class, "lb");
-        rightBack = hardwareMap.get(DcMotor.class, "rb");
-
-        //the imu
-        imu1 = hardwareMap.get(BNO055IMU.class, "imu");
-        imu2 = hardwareMap.get(BNO055IMU.class, "imu 1");
-
-        //reverses the left motors, so that they can be programed the same
-        leftFront.setDirection(DcMotor.Direction.REVERSE);
-        rightFront.setDirection(DcMotor.Direction.FORWARD);
-        leftBack.setDirection(DcMotor.Direction.REVERSE);
-        rightBack.setDirection(DcMotor.Direction.FORWARD);
+        //sets everything up, motors and encoders
+        setUP();
 
         //waits for the start
         waitForStart();
@@ -96,7 +163,6 @@ public class IMUmecDrive extends LinearOpMode {
 
         //loop that starts the opmode
         while (opModeIsActive()) {
-
             controller[0] = pow(-gamepad1.left_stick_x,3); //desired x movement
             controller[1] = pow(-gamepad1.left_stick_y,3); //desired y movement
             controller[2] = pow(gamepad1.right_stick_x,3); //desired rotation
@@ -104,9 +170,8 @@ public class IMUmecDrive extends LinearOpMode {
             telemetry.addData("start_controller_x", controller[0]);
             telemetry.addData("start_controller_y", controller[1]);
 
-
             IMUControl.getPosition(position,imu1,imu2,true);
-            IMUControl.imuDrive(motors,controller,position[0],false,true);
+            IMUControl.imuDrive(motors,controller,position[0],true,false);
 
             imputMecMotors(motors);
 
@@ -121,6 +186,7 @@ public class IMUmecDrive extends LinearOpMode {
 
 
     }
+    private int loopCounter;
 
     private void imputMecMotors(double[]imputs){
         leftFront.setPower(imputs[0]);
@@ -128,6 +194,19 @@ public class IMUmecDrive extends LinearOpMode {
         rightFront.setPower(imputs[2]);
         rightBack.setPower(imputs[3]);
     }
+    private void imputMecVelocity(double[]imputs){
+        arrayScale(imputs,.0175 * 39600);
+        leftFront.setVelocity(imputs[0], AngleUnit.DEGREES);
+        leftBack.setVelocity(imputs[1], AngleUnit.DEGREES);
+        rightFront.setVelocity(imputs[2], AngleUnit.DEGREES);
+        rightBack.setVelocity(imputs[3], AngleUnit.DEGREES);
+    }
 
-    private int loopCounter;
+
+    private double[] arrayScale(double[] imput, double scalar){
+        for(int i = imput.length; i > 0; i--){
+            imput[i-1] *= scalar;
+        }
+        return imput;
+    }
 }

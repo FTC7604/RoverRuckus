@@ -9,6 +9,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.teamcode.util.IMUControl;
 
 import static java.lang.Math.*;
 
@@ -19,7 +20,8 @@ public class test_imuTurn extends LinearOpMode{
     private ElapsedTime runtime = new ElapsedTime();
 
     //adds the imu methods
-    private IMUControl IMUControl = new IMUControl();
+    private org.firstinspires.ftc.teamcode.util.IMUControl IMUControl = new IMUControl();
+    private PIDAngleControl PIDControl = new PIDAngleControl();
 
     //drivetrain
     private DcMotorEx leftFront = null;
@@ -159,7 +161,7 @@ public class test_imuTurn extends LinearOpMode{
 
         leftLift.setTargetPosition(liftUpperLimit);
 
-        //lower down then stop
+        //lower down then stopAndResetEncoders
         while (leftLift.isBusy()){
             leftLift.setPower(1);
             rightLift.setPower(1);
@@ -214,10 +216,11 @@ public class test_imuTurn extends LinearOpMode{
     }
 
     private void imputMecVelocity(double[]imputs){
-        leftFront.setVelocity(imputs[0] * 39600, AngleUnit.DEGREES);
-        leftBack.setVelocity(imputs[1] * 39600, AngleUnit.DEGREES);
-        rightFront.setVelocity(imputs[2] * 39600, AngleUnit.DEGREES);
-        rightBack.setVelocity(imputs[3] * 39600, AngleUnit.DEGREES);
+        arrayScale(imputs,400);
+        leftFront.setVelocity(imputs[0], AngleUnit.DEGREES);
+        leftBack.setVelocity(imputs[1], AngleUnit.DEGREES);
+        rightFront.setVelocity(imputs[2], AngleUnit.DEGREES);
+        rightBack.setVelocity(imputs[3], AngleUnit.DEGREES);
     }
     private void imputMecPower(double[]imputs){
         leftFront.setPower(imputs[0]);
@@ -242,6 +245,12 @@ public class test_imuTurn extends LinearOpMode{
         return busy;
     }
 
+    private double[] arrayScale(double[] imput, double scalar){
+        for(int i = imput.length; i > 0; i--){
+            imput[i-1] *= scalar;
+        }
+        return imput;
+    }
     private double[] arrayAddDouble(double[]imput, double add){
         for(int i = imput.length - 1; i > -1; i--){
             imput[i] += add;
@@ -289,32 +298,17 @@ public class test_imuTurn extends LinearOpMode{
         IMUControl.createIMU(imu1, imu2);
         IMUControl.calibrateIMU(imu1, imu2);
 
-        //imuTurn(PI/2,.0005);
+        //turnRadians(PI/2,.0005);
         double[] motors = new double[4];
         double[] position = new double[3];
 
         double turn = PI/2;
 
-//        for(int i = 10; i > 0; i--) {
-//            IMUControl.getPosition(position, imu1, imu2, true);
-//        }
-//
-//        double desiredTurn = position[0] + turn;
-//        double remainTurn = 0;
-//
-//        do{
-//            IMUControl.turnIMU(motors, desiredTurn,  imu1, imu2);
-//            remainTurn = IMUControl.remainTurn(desiredTurn,imu1,imu2);
-//
-//            imputMecVelocity(motors);
-//
-//            telemetry.addData("Remaining Turn", remainTurn);
-//            telemetry.addData("Motor Power", motors[0]);
-//            telemetry.update();
-//
-//        }while(abs(remainTurn) > 0.01);
+        double beginTime = time;
+        //turnRadians(turn,0.02);
+        imuTurn2(turn,0.05);
+        double endTime = time;
 
-        imuTurn(turn,0.01);
 
         leftFront.setPower(0);
         leftBack.setPower(0);
@@ -323,11 +317,9 @@ public class test_imuTurn extends LinearOpMode{
 
         while(opModeIsActive() && time < 3000){
             telemetry.addLine("I'm done.");
+            telemetry.addData("It took too long",endTime - beginTime);
             telemetry.update();
         }
-
-
-
 
         //sleep(1000);
     }
@@ -335,18 +327,38 @@ public class test_imuTurn extends LinearOpMode{
     void imuTurn(double turnAngle, double precision){
         double[] motors = new double[4];
         double[] imputs = new double[3];
-
         double[] position = new double[3];
-        IMUControl.getPosition(position,imu1,imu2,true);
 
+        boolean angleCondition = false;
+        boolean motorCondition = false;
+
+        IMUControl.getPosition(position,imu1,imu2,true);
         double desiredTurnPosition = turnAngle + position[0];
 
-        while(abs(IMUControl.remainTurn(desiredTurnPosition,position[0])) > precision && opModeIsActive()){
+        PIDControl.startPID(desiredTurnPosition);
+
+        do{
             IMUControl.getPosition(position,imu1,imu2,false);
-            imputs[2] = IMUControl.remainTurn(desiredTurnPosition,position[0]) * .0175;
+            PIDControl.onSensorChanged(position[0]);
+            imputs[2] = PIDControl.getValue(2.9,1.5,.9,.6);
 
             IMUControl.imuDrive(motors,imputs,0,false,false);
             imputMecVelocity(motors);
-        }
+
+            if(abs(desiredTurnPosition - position[0]) < precision)angleCondition = true;
+            else angleCondition = false;
+            if(abs(imputs[2]) < 10 * precision) motorCondition = true;
+            else motorCondition = false;
+        }while(opModeIsActive() && !(angleCondition && motorCondition));
+    }
+    void imuTurn2(double turnAngle, double precision){
+        boolean condiditon = false;
+        double[] motors = new double[4];
+        IMUControl.startIMUturn(turnAngle,imu1,imu2);
+
+        do{
+            IMUControl.IMUturn(motors, imu1,imu2);
+            imputMecVelocity(motors);
+        }while(opModeIsActive() && IMUControl.IMUturnCondidtion(precision));
     }
 }

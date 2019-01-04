@@ -34,13 +34,6 @@ public class MotorControl
         }
     }
 
-    public void waitForDistance(DcMotor motor, int targetPosition)
-    {
-        init(motor, targetPosition);
-        //noinspection StatementWithEmptyBody
-        while(!isCompleted(motor));
-    }
-
     private static class MotorControlParameters
     {
         int target;

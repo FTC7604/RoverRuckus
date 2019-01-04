@@ -13,6 +13,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefaultListener;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
+import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
 import org.firstinspires.ftc.robotcore.external.tfod.TFObjectDetector;
 import org.firstinspires.ftc.teamcode.util.PropertiesLoader;
 
@@ -33,6 +34,7 @@ import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocaliz
 public class VisionTracking
 {
     private static final String VUFORIA_KEY = "ASv2MNj/////AAAAGQukwPKRd0YcsSlpoJYzs9EdjNGpnGv0mY+oWYr923xV6ZP+Tm9A7ZjZvdw7KY3iqJ/2AXpNLeHZLylMumJd46ZYL4zpkdjPY6OwGwUmQBrgo6MXWgIM6bKgp/0M1SJnb8yYpFjzTAqAXtXqotY5KPiLkelgBeCuPYc+NUAlf6vSxjEr7+Zezid1O2zV3dRV/FlaBJN9MQsgWOvPQfsTiKqgpEr2b4pLG8PMqL/HU3RvuEexsWSv5eN6mWtx8Vt7m+GSBC6xo9vxR+gaTLsi19RAXTPCq4UhoQvrFYIORotVeVa5zIhZXlpMc09NZT25e6DcOPTv2eloL55O2/FK81AGay8e4urLNQ5wF3vknehR";
+//    private static final String VUFORIA_KEY = "Adw59PP/////AAABmSngvZTKXktpu+nuzpPLAFUc6w406s2RYiPPvJaY9A1k2/zyXeM83mHvqT14sWp9QlghcCK1akohLb6SHQv4cXvD8AbeO1a9sRhhchx1X5eL6ttrRE5PH6g517XhKI0dvKsoeYhZu6k4ln6dacQOC11xv/AHSEi/VipxqOMXlNesBfv/jmCc48H6LTFTOHLVDEb9vkk7btw6StRcwle0PUdbCh5aPIkRI2pTh+0R1hY5FyGGrdyZltrBoUusodgwQW0sIai/V21YZGgKaN5QYZLOhO3Fv0ZhjWsnj52e/BivDb3RJyPF1loygTBADo6YZoki1S/oDzoqcP3VmjIaEIFr6RfIGrnVZtkVbjWZP+Zs";
 
     private static final float mmPerInch = 25.4f;
     private static final float mmFTCFieldWidth = (12 * 6) * mmPerInch;
@@ -49,10 +51,12 @@ public class VisionTracking
         PRE_INIT, POST_INIT, TRACKING
     }
 
+    private VuforiaLocalizer vuforia;
     private VisionTrackingState state = VisionTrackingState.PRE_INIT;
     private List<VuforiaTrackable> allTrackables;
     private VuforiaTrackables targetsRoverRuckus;
     private Map<String, VisionTarget> targets = new HashMap<>();
+    private TFObjectDetector tfod;
 
     private PropertiesLoader loader = new PropertiesLoader("VisionTracking");
     private final int MAX_AGE = loader.getIntegerProperty("maxAge");
@@ -62,6 +66,9 @@ public class VisionTracking
     private final float CAMERA_ROTATION_X = loader.getFloatProperty("cameraRotationX");
     private final float CAMERA_ROTATION_Y = loader.getFloatProperty("cameraRotationY");
     private final float CAMERA_ROTATION_Z = loader.getFloatProperty("cameraRotationZ");
+    private final String TFOD_MODEL_ASSET = "RoverRuckus.tflite";
+    private final String LABEL_GOLD_MINERAL = "Gold Mineral";
+    private final String LABEL_SILVER_MINERAL = "Silver Mineral";
 
     public VisionTracking(Context context)
     {
@@ -80,15 +87,27 @@ public class VisionTracking
 
     public void init()
     {
-
         int cameraMonitorViewId = context.getResources().getIdentifier("cameraMonitorViewId", "id", context.getPackageName());
-        VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters(cameraMonitorViewId);
+        VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters(/*cameraMonitorViewId*/);
 
         parameters.vuforiaLicenseKey = VUFORIA_KEY;
         parameters.cameraDirection = CAMERA_CHOICE;
 
-        VuforiaLocalizer vuforia = ClassFactory.getInstance().createVuforia(parameters);
+        vuforia = ClassFactory.getInstance().createVuforia(parameters);
+    }
 
+    public void initTfod(){
+        int tfodMonitorViewId = context.getResources().getIdentifier("tfodMonitorViewId", "id", context.getPackageName());
+        TFObjectDetector.Parameters tfodParameters = new TFObjectDetector.Parameters(tfodMonitorViewId);
+        tfod = ClassFactory.getInstance().createTFObjectDetector(tfodParameters, vuforia);
+        tfod.loadModelFromAsset(TFOD_MODEL_ASSET, LABEL_GOLD_MINERAL, LABEL_SILVER_MINERAL);
+    }
+
+    public void shutdownTfod(){
+        tfod.shutdown();
+    }
+
+    public void initVision(){
         targetsRoverRuckus = vuforia.loadTrackablesFromAsset("RoverRuckus");
         VuforiaTrackable blueRover = targetsRoverRuckus.get(0);
         blueRover.setName("Blue-Rover");
@@ -199,7 +218,7 @@ public class VisionTracking
         /**  Let all the trackable listeners know where the phone is.  */
         for (VuforiaTrackable trackable : allTrackables)
         {
-            ((VuforiaTrackableDefaultListener) trackable.getListener()).setPhoneInformation(phoneLocationOnRobot, parameters.cameraDirection);
+            ((VuforiaTrackableDefaultListener) trackable.getListener()).setPhoneInformation(phoneLocationOnRobot, CAMERA_CHOICE);
         }
 
 
@@ -269,6 +288,62 @@ public class VisionTracking
                 targets.put(info.name, info);
             }
         }
+    }
+
+    private void sortArray(List<Recognition> arrayList){
+        int size = arrayList.size();
+
+        if(size >= 3) {
+            for (int i = 1; i < size; i++) {
+                for (int j = size - 1; j >= i; j--) {
+                    if (arrayList.get(j - 1).getLeft() > arrayList.get(j).getLeft()) {
+                        arrayList.set(j, arrayList.set(j - 1, arrayList.get(j)));
+                    }
+                }
+            }
+        }
+    }
+
+    public int detectMineral(){
+        tfod.activate();
+
+        int mineralPosition = 0;
+
+        int goldMineralX = -1;
+        int silverMineral1X = -1;
+        int silverMineral2X = -1;
+
+        List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
+        List<Recognition> validRecognitions = new ArrayList<>();
+
+        if (updatedRecognitions != null) {
+            sortArray(updatedRecognitions);
+            if (updatedRecognitions.size() >= 3) {
+                validRecognitions.add(updatedRecognitions.get(0));
+                validRecognitions.add(updatedRecognitions.get(1));
+                validRecognitions.add(updatedRecognitions.get(2));
+                for (Recognition recognition : validRecognitions) {
+                    if (recognition.getLabel().equals(LABEL_GOLD_MINERAL)) {
+                        goldMineralX = (int) recognition.getTop();
+                    } else if (silverMineral1X == -1) {
+                        silverMineral1X = (int) recognition.getTop();
+                    } else {
+                        silverMineral2X = (int) recognition.getTop();
+                    }
+                }
+                if (goldMineralX != -1 && silverMineral1X != -1 && silverMineral2X != -1) {
+                    if (goldMineralX < silverMineral1X && goldMineralX < silverMineral2X) {
+                        mineralPosition = 1;
+                    } else if (goldMineralX > silverMineral1X && goldMineralX > silverMineral2X) {
+                        mineralPosition = 3;
+                    } else {
+                        mineralPosition = 2;
+                    }
+                }
+            }
+        }
+
+        return mineralPosition;
     }
 
     public Collection<VisionTarget> getTrackingInfo()
