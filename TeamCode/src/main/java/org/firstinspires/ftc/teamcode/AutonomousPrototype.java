@@ -87,7 +87,7 @@ public class AutonomousPrototype extends DWAILinearOpMode
         step("Image detection");
         crunchy.phoneMount.setPosition(crunchy.OPEN_PHONE);
 
-        SamplePosition mineralPosition;
+        SamplePosition mineralPosition = null;
         while(ensureOpModeIsActive())
         {
             switch (GOLD_POSITION)
