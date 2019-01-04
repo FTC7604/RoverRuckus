@@ -39,6 +39,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.TouchSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.teamcode.util.Crunchy;
 import org.firstinspires.ftc.teamcode.util.PropertiesLoader;
 import org.firstinspires.ftc.teamcode.util.vision.VisionTarget;
 import org.firstinspires.ftc.teamcode.util.vision.VisionTracking;
@@ -46,32 +47,15 @@ import org.firstinspires.ftc.teamcode.util.vision.VisionTracking;
 import java.util.Locale;
 
 import static java.lang.Math.abs;
+import static java.lang.Math.ceil;
 import static java.lang.Math.signum;
 
 @TeleOp(name="RR Full Teleop", group="Linear Opmode")
 //@Disabled
 
-
 public class RRFullTeleop extends LinearOpMode {
 
     private ElapsedTime runtime = new ElapsedTime();
-
-    private DcMotor leftFront = null;
-    private DcMotor rightFront = null;
-    private DcMotor leftBack    = null;
-    private DcMotor rightBack   = null;
-
-    private DcMotor leftLift = null;//looking dead on at the front of the bot
-    private DcMotor rightLift = null;
-
-    private DcMotor intake = null;
-    private DcMotor intakeLift = null;
-
-    private Servo hook = null;
-    private Servo phoneMount = null;
-    private Servo sampleArm = null;
-    private Servo leftOutput = null;
-    private Servo rightOutput = null;
 
     //hook
     private boolean hookCurrState = false;
@@ -83,49 +67,26 @@ public class RRFullTeleop extends LinearOpMode {
     private boolean intakeCurrState = false;
     private boolean intakePrevState = false;
 
+    private Crunchy crunchy;
+
     private PropertiesLoader loader = new PropertiesLoader("RRFullTeleop");
-    private PropertiesLoader robotLoader = new PropertiesLoader("Crunchy");
     private final double SLOW_MULTIPLIER = loader.getDoubleProperty("slowMultiplier");
-    private final boolean DISPLAY_TARGET_INFO = loader.getBooleanProperty("displayTargetInfo");
-    private final double OPEN_PHONE = robotLoader.getDoubleProperty("openPhone");
 
     @Override
     public void runOpMode() {
+        crunchy = new Crunchy(this);
 
         telemetry.addData("Status", "Initialized");
         telemetry.update();
 
-        leftFront  = hardwareMap.get(DcMotor.class, "lf");
-        rightFront = hardwareMap.get(DcMotor.class, "rf");
-        leftBack = hardwareMap.get(DcMotor.class, "lb");
-        rightBack = hardwareMap.get(DcMotor.class, "rb");
-
-        leftLift = hardwareMap.get(DcMotor.class, "ll");
-        rightLift = hardwareMap.get(DcMotor.class, "rl");
-        intake = hardwareMap.get(DcMotor.class, "in");
-        intakeLift = hardwareMap.get(DcMotor.class, "il");
-
-        hook = hardwareMap.get(Servo.class, "hk");
-        phoneMount = hardwareMap.get(Servo.class, "ph");
-        sampleArm = hardwareMap.get(Servo.class, "sa");
-        leftOutput = hardwareMap.get(Servo.class, "lo");
-        rightOutput = hardwareMap.get(Servo.class, "ro");
-
-        VisionTracking tracking = new VisionTracking(this);
-        tracking.init();
-        tracking.initVision();
         setMotorBehaviors();
 
         waitForStart();
         runtime.reset();
 
-        if(DISPLAY_TARGET_INFO) {
-            phoneMount.setPosition(OPEN_PHONE);
-        }
-
         while (opModeIsActive()) {
 
-            intake.setPower(gamepad2.right_stick_y);
+            crunchy.intake.setPower(gamepad2.right_stick_y);
 //            runIntake();
             
             RunIntakeLift();
@@ -140,34 +101,19 @@ public class RRFullTeleop extends LinearOpMode {
 
             RunHook();
 
-            if(DISPLAY_TARGET_INFO)
-            {
-                tracking.updateTracking();
-                for (VisionTarget target : tracking.getTrackingInfo())
-                {
-                    String targetString = String.format(Locale.US,
-                            "translation: [%f, %f, %f], rotation: [%f, %f, %f], age: %d",
-                            target.translationX, target.translationY, target.translationZ,
-                            target.yaw, target.pitch, target.roll,
-                            target.age);
-
-                    telemetry.addData(target.name, targetString);
-                }
-            }
-
-            telemetry.addData("intake lift", intakeLift.getCurrentPosition());
-            telemetry.addData("Encoder Position", leftLift.getCurrentPosition());
+            telemetry.addData("intake lift", crunchy.intakeLift.getCurrentPosition());
+            telemetry.addData("Encoder Position", crunchy.liftLeft.getCurrentPosition());
             telemetry.update();
         }
     }
     
     private void runIntake(){
-        int intakePosition = intake.getCurrentPosition() % (1440 / 2);
+        int intakePosition = crunchy.intake.getCurrentPosition() % (1440 / 2);
         if(abs(gamepad2.right_stick_y) > 2) {
-            intake.setPower(gamepad2.right_stick_y);
+            crunchy.intake.setPower(gamepad2.right_stick_y);
         }
         else if(intakePosition > (1440 - 200)/2 || intakePosition < 100) {
-                intake.setPower(.5);
+                crunchy.intake.setPower(.5);
         }
     }
     
@@ -200,15 +146,15 @@ public class RRFullTeleop extends LinearOpMode {
         }
         intakePrevState = intakeCurrState;
 
-        if ((intakeTargetIsUp) && (intakeLift.getCurrentPosition() < intakeUpperLimit))
+        if ((intakeTargetIsUp) && (crunchy.intakeLift.getCurrentPosition() < intakeUpperLimit))
         {
-            intakeLift.setPower(intakeliftUp);
+            crunchy.intakeLift.setPower(intakeliftUp);
         }
-        else if ((!intakeTargetIsUp) && (intakeLift.getCurrentPosition() > intakeLowerLimit))
+        else if ((!intakeTargetIsUp) && (crunchy.intakeLift.getCurrentPosition() > intakeLowerLimit))
         {
-            intakeLift.setPower(intakeliftDown);
+            crunchy.intakeLift.setPower(intakeliftDown);
         }
-        else intakeLift.setPower(0);
+        else crunchy.intakeLift.setPower(0);
     }
 
     private void RunLift () {
@@ -218,35 +164,35 @@ public class RRFullTeleop extends LinearOpMode {
         //Lifter controls, Negative is up, positive is down Hang is the other way around
 
         //if the lift is below where it is supposed to be
-        if (leftLift.getCurrentPosition() < liftLowerLimit) {
+        if (crunchy.liftLeft.getCurrentPosition() < liftLowerLimit) {
             //you can go up
             if (gamepad2.left_stick_y > 0) {
-                leftLift.setPower(gamepad2.left_stick_y);
-                rightLift.setPower(gamepad2.left_stick_y);
+                crunchy.liftLeft.setPower(gamepad2.left_stick_y);
+                crunchy.liftRight.setPower(gamepad2.left_stick_y);
             }
             //but not down
             else {
-                leftLift.setPower(0);
-                rightLift.setPower(0);
+                crunchy.liftLeft.setPower(0);
+                crunchy.liftRight.setPower(0);
             }
         }
         //if the lift is the above where is should be
-        else if (leftLift.getCurrentPosition() > liftUpperLimit) {
+        else if (crunchy.liftLeft.getCurrentPosition() > liftUpperLimit) {
             //you can go down
             if (gamepad2.left_stick_y < 0) {
-                leftLift.setPower(gamepad2.left_stick_y);
-                rightLift.setPower(gamepad2.left_stick_y);
+                crunchy.liftLeft.setPower(gamepad2.left_stick_y);
+                crunchy.liftRight.setPower(gamepad2.left_stick_y);
             }
             //but not down
             else
             {
-                leftLift.setPower(0);
-                rightLift.setPower(0);
+                crunchy.liftLeft.setPower(0);
+                crunchy.liftRight.setPower(0);
             }
         }
         else{
-            leftLift.setPower(gamepad2.left_stick_y);
-            rightLift.setPower(gamepad2.left_stick_y);
+            crunchy.liftLeft.setPower(gamepad2.left_stick_y);
+            crunchy.liftRight.setPower(gamepad2.left_stick_y);
         }
     }
 
@@ -257,14 +203,14 @@ public class RRFullTeleop extends LinearOpMode {
 
         if(gamepad1.right_bumper) {
             y *= SLOW_MULTIPLIER;
-            x *= abs(SLOW_MULTIPLIER);
+            x *= SLOW_MULTIPLIER;
             turnVal *= abs(SLOW_MULTIPLIER);
         }
 
-        leftFront.setPower(y-x+turnVal);
-        leftBack.setPower(y+x+turnVal);
-        rightFront.setPower(y+x-turnVal);
-        rightBack.setPower(y-x-turnVal);
+        crunchy.frontLeft.setPower(y-x+turnVal);
+        crunchy.backLeft.setPower(y+x+turnVal);
+        crunchy.frontRight.setPower(y+x-turnVal);
+        crunchy.backRight.setPower(y-x-turnVal);
 
         telemetry.addData("y", y);
         telemetry.addData("x", x);
@@ -281,8 +227,8 @@ public class RRFullTeleop extends LinearOpMode {
         double armUp = 0.1;
 
         //hold the phone and arm in place
-        phoneMount.setPosition(phoneIn);
-        sampleArm.setPosition(armUp);
+        crunchy.phoneMount.setPosition(phoneIn);
+        crunchy.sampleArm.setPosition(armUp);
     }
 
     private void RunScoringBucket () {
@@ -292,20 +238,20 @@ public class RRFullTeleop extends LinearOpMode {
         double roDown = 1- loDown;
         double roUp = 1-loUp;
 
-        double liftHalfway = 3000;
+        double liftHalfway = 3100;
 
         //controls of the bucket with gamapad1.a and makes sure that the user can't break the bot. It holds at a diagonal position when it can so that it keeps the particles
-        if ((gamepad2.a == false) && leftLift.getCurrentPosition() > liftHalfway){
-            leftOutput.setPosition(0.35);
-            rightOutput.setPosition(0.65);
+        if ((gamepad2.a == false) && crunchy.liftLeft.getCurrentPosition() > liftHalfway){
+            crunchy.leftOutput.setPosition(0.35);
+            crunchy.rightOutput.setPosition(0.65);
         }
-        else if (leftLift.getCurrentPosition() < liftHalfway){
-            togglePosition(leftOutput, loDown, (loDown+0.1), gamepad2.a);//lets the user move the bucket around but only a little bit
-            togglePosition(rightOutput, roDown, (roDown-0.1), gamepad2.a);
+        else if (crunchy.liftLeft.getCurrentPosition() < liftHalfway){
+            togglePosition(crunchy.leftOutput, loDown, (loDown+0.1), gamepad2.a);//lets the user move the bucket around but only a little bit
+            togglePosition(crunchy.rightOutput, roDown, (roDown-0.1), gamepad2.a);
         }
         else{
-            togglePosition(leftOutput, loDown, loUp, gamepad2.a);//full range of motion for scoring when the bucket is in the air
-            togglePosition(rightOutput, roDown, roUp, gamepad2.a);
+            togglePosition(crunchy.leftOutput, loDown, loUp, gamepad2.a);//full range of motion for scoring when the bucket is in the air
+            togglePosition(crunchy.rightOutput, roDown, roUp, gamepad2.a);
         }
     }
 
@@ -321,37 +267,37 @@ public class RRFullTeleop extends LinearOpMode {
         }
         hookPrevState = hookCurrState;
 
-        if (hookIsOpen) hook.setPosition(hookOpen);
-        else hook.setPosition(hookEngaged);
+        if (hookIsOpen) crunchy.hook.setPosition(hookOpen);
+        else crunchy.hook.setPosition(hookEngaged);
 
     }
 
     private void setMotorBehaviors () {
-        leftLift.setDirection(DcMotor.Direction.FORWARD);
-        rightLift.setDirection(DcMotor.Direction.REVERSE);
+        crunchy.liftLeft.setDirection(DcMotor.Direction.FORWARD);
+        crunchy.liftRight.setDirection(DcMotor.Direction.REVERSE);
 
-        intake.setDirection(DcMotor.Direction.FORWARD);
-        intakeLift.setDirection(DcMotor.Direction.FORWARD);
+        crunchy.intake.setDirection(DcMotor.Direction.FORWARD);
+        crunchy.intakeLift.setDirection(DcMotor.Direction.FORWARD);
 
         //intake.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        intakeLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        leftLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        rightLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        crunchy.intakeLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        crunchy.liftLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        crunchy.liftRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         //makes it stopAndResetEncoders when the motor is at rest
         //intake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        intakeLift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        leftLift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        rightLift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        crunchy.intakeLift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        crunchy.liftLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        crunchy.liftRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        leftFront.setDirection(DcMotor.Direction.REVERSE);
-        rightFront.setDirection(DcMotor.Direction.FORWARD);
-        leftBack.setDirection(DcMotor.Direction.REVERSE);
-        rightBack.setDirection(DcMotor.Direction.FORWARD);
+        crunchy.frontLeft.setDirection(DcMotor.Direction.REVERSE);
+        crunchy.frontRight.setDirection(DcMotor.Direction.FORWARD);
+        crunchy.backLeft.setDirection(DcMotor.Direction.REVERSE);
+        crunchy.backRight.setDirection(DcMotor.Direction.FORWARD);
 
-        leftFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        rightFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        leftBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        rightBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        crunchy.frontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        crunchy.frontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        crunchy.backLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        crunchy.backRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
     }
 }

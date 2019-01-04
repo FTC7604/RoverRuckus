@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.util;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -41,8 +42,6 @@ public class Crunchy
 
     public BNO055IMU imu1, imu2;
 
-    public DWAILinearOpMode opMode;
-
     private PropertiesLoader loader = new PropertiesLoader("Crunchy");
     public final double HOOK_OPEN = loader.getDoubleProperty("hookOpen");
     public final double HOOK_ENGAGED = loader.getDoubleProperty("hookEngaged");
@@ -53,16 +52,15 @@ public class Crunchy
     public final double OPEN_PHONE = loader.getDoubleProperty("openPhone");
     public final double CLOSED_PHONE = loader.getDoubleProperty("closedPhone");
 
-    private final double kP = loader.getDoubleProperty("pidProportional");
-    private final double kI = loader.getDoubleProperty("pidIntegral");
-    private final double kD = loader.getDoubleProperty("pidDifferential");
-    private final double pidMult = loader.getDoubleProperty("pidMultiplier");
+    protected final double kP = loader.getDoubleProperty("pidProportional");
+    protected final double kI = loader.getDoubleProperty("pidIntegral");
+    protected final double kD = loader.getDoubleProperty("pidDifferential");
+    protected final double pidMult = loader.getDoubleProperty("pidMultiplier");
 
-    public Crunchy(DWAILinearOpMode opMode)
+    public Crunchy(OpMode opMode)
     {
         mapHardware(opMode.hardwareMap);
         initIMU();
-        this.opMode = opMode;
     }
 
     //Hardware mapping
@@ -110,7 +108,7 @@ public class Crunchy
         liftLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         liftRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        //sets the directioon for the drivetrain
+        //sets the direction for the drivetrain
         frontLeft.setDirection(DcMotor.Direction.REVERSE);
         frontRight.setDirection(DcMotor.Direction.FORWARD);
         backLeft.setDirection(DcMotor.Direction.REVERSE);
@@ -141,7 +139,7 @@ public class Crunchy
         ReadWriteFile.writeFile(file2, calibrationData2.serialize());
     }
 
-    private double getDriveEncoderValue()
+    public double getDriveEncoderValue()
     {
         int fl = abs(frontLeft.getCurrentPosition());
         int fr = abs(frontRight.getCurrentPosition());
@@ -149,42 +147,6 @@ public class Crunchy
         int br = abs(backRight.getCurrentPosition());
 
         return (fl + fr + bl + br) / 4.0;
-    }
-
-    public void driveForwardForDistance(double power, int distance)
-    {
-        stopAndResetEncoders();
-        power *= signum(distance);
-        distance = abs(distance);
-
-        double currentPosition;
-        while (opMode.ensureOpModeIsActive() && (currentPosition = getDriveEncoderValue()) < distance)
-        {
-            double remaining = distance - currentPosition;
-            double ratio = (remaining + distance) / (2.0 * distance);
-            drive(power * ratio);
-        }
-        stopAndResetEncoders();
-    }
-
-
-    public void strafeRightForDistance(double power, int distance)
-    {
-        stopAndResetEncoders();
-        power *= signum(distance);
-        distance = abs(distance);
-
-        double x = -power * abs(power);
-
-        double currentPosition;
-        while (opMode.ensureOpModeIsActive() && (currentPosition = getDriveEncoderValue()) < distance)
-        {
-            double remaining = distance - currentPosition;
-            double ratio = (remaining + distance) / (2.0 * distance);
-            double val = x * ratio;
-            drive(-val, val, val, -val);
-        }
-        stopAndResetEncoders();
     }
 
     public void drive(double fl, double fr, double bl, double br)
@@ -228,37 +190,5 @@ public class Crunchy
             (imu1.getAngularOrientation().secondAngle + imu2.getAngularOrientation().secondAngle) / 2, //Roll
             (imu1.getAngularOrientation().thirdAngle + imu2.getAngularOrientation().thirdAngle) / 2 //Pitch
         };
-    }
-
-    /* Positive turn direction is right (clockwise) */
-    public void turnDegrees(double turnAngle, double precision)
-    {
-        turnRadians(toRadians(turnAngle), toRadians(precision));
-    }
-
-    public void turnRadians(double turnAngle, double precision)
-    {
-        turnAngle *= -1;
-
-        double[] position = getIMUPosition();
-        double desiredAngle = turnAngle + position[0];
-        PIDAngleControl pidControl = new PIDAngleControl();
-        pidControl.startPID(desiredAngle);
-
-        while(opMode.ensureOpModeIsActive() && abs(desiredAngle - position[0]) >= precision)
-        {
-            position = getIMUPosition();
-            pidControl.onSensorChanged(position[0]);
-            double turnVal = pidControl.getValue(kP, kI, kD, pidMult);
-            opMode.telemetry.addData("konstants", kP + " " + kI + " " + kD + " " + pidMult);
-            opMode.telemetry.addData("error", pidControl.getError());
-            opMode.telemetry.addData("integral", pidControl.getIntegral());
-            opMode.telemetry.addData("derivative", pidControl.getDerivative());
-            opMode.telemetry.addData("turn", turnVal);
-            opMode.telemetry.update();
-            drive(turnVal, -turnVal);
-        }
-
-        stopAndResetEncoders();
     }
 }

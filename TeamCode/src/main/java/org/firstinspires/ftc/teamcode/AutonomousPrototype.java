@@ -4,7 +4,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.teamcode.util.Crunchy;
+import org.firstinspires.ftc.teamcode.util.CrunchyAutonomous;
 import org.firstinspires.ftc.teamcode.util.DWAILinearOpMode;
 import org.firstinspires.ftc.teamcode.util.PropertiesLoader;
 import org.firstinspires.ftc.teamcode.util.vision.VisionTracking;
@@ -14,7 +14,7 @@ public class AutonomousPrototype extends DWAILinearOpMode
 {
     //creates the runtime
     private ElapsedTime runtime = new ElapsedTime();
-    private Crunchy crunchy;
+    private CrunchyAutonomous crunchy;
 
     private PropertiesLoader loader = new PropertiesLoader("AutonomousPrototype");
     private final boolean STEP_MODE = loader.getBooleanProperty("stepMode");
@@ -64,7 +64,7 @@ public class AutonomousPrototype extends DWAILinearOpMode
         //Setting up all processes
         telemetry.addData("Status", "Initialized");
         telemetry.update();
-        crunchy = new Crunchy(this);
+        crunchy = new CrunchyAutonomous(this);
 
         tracking = new VisionTracking(this);
         tracking.init();
@@ -88,20 +88,26 @@ public class AutonomousPrototype extends DWAILinearOpMode
         crunchy.phoneMount.setPosition(crunchy.OPEN_PHONE);
 
         SamplePosition mineralPosition;
-        switch (GOLD_POSITION)
+        while(ensureOpModeIsActive())
         {
-            case 1:
-                mineralPosition = SamplePosition.LEFT;
-                break;
-            case 2:
-                mineralPosition = SamplePosition.CENTER;
-                break;
-            case 3:
-                mineralPosition = SamplePosition.RIGHT;
-                break;
-            default:
-                mineralPosition = detectSample(tracking);
-                break;
+            switch (GOLD_POSITION)
+            {
+                case 1:
+                    mineralPosition = SamplePosition.LEFT;
+                    break;
+                case 2:
+                    mineralPosition = SamplePosition.CENTER;
+                    break;
+                case 3:
+                    mineralPosition = SamplePosition.RIGHT;
+                    break;
+                default:
+                    mineralPosition = detectSample(tracking);
+                    break;
+            }
+
+            telemetry.addData("Detected", mineralPosition);
+            telemetry.update();
         }
         tracking.shutdownTfod();
 
