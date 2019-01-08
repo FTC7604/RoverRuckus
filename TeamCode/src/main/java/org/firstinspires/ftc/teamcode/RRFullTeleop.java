@@ -82,7 +82,7 @@ public class RRFullTeleop extends LinearOpMode {
         telemetry.update();
 
         setMotorBehaviors();
-        
+
         waitForStart();
         runtime.reset();
 
@@ -202,15 +202,19 @@ public class RRFullTeleop extends LinearOpMode {
     private boolean pastDriveMode = true;
     private boolean fieldCentric = false;
 
+    private double[] controller = new double[3];
+    private double[] motors = new double[4];
+    private double[] position = new double[3];
+
     private void RunDrive () {
-        double[]controller = new double[3];
-        double[]motors = new double[4];
-        double[]position = new double[3];
+
 
         currentDriveMode = gamepad1.left_bumper;
+
         if(currentDriveMode && !pastDriveMode){
-            if(fieldCentric)fieldCentric = false;
+
             if(!fieldCentric)fieldCentric = true;
+            else fieldCentric = false;
         }
         pastDriveMode = currentDriveMode;
 
@@ -236,6 +240,7 @@ public class RRFullTeleop extends LinearOpMode {
             IMUControl.imuDrive(motors, controller, position[0], false, true);
         }
         else{
+            IMUControl.getPosition(position, crunchy.imu1, crunchy.imu2, true);
             IMUControl.imuDrive(motors, controller, position[0], false, false);
         }
 
