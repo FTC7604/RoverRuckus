@@ -339,7 +339,7 @@ public class test_imuTurn extends LinearOpMode{
 
         do{
             IMUControl.getPosition(position,imu1,imu2,false);
-            PIDControl.onSensorChanged(position[0]);
+            PIDControl.newErrorValue(position[0]);
             imputs[2] = PIDControl.getValue(2.9,1.5,.9,.6);
 
             IMUControl.imuDrive(motors,imputs,0,false,false);

@@ -51,6 +51,8 @@ public class Crunchy
     public final double RIGHT_OUTPUT_UP = 1 - LEFT_OUTPUT_UP;
     public final double OPEN_PHONE = loader.getDoubleProperty("openPhone");
     public final double CLOSED_PHONE = loader.getDoubleProperty("closedPhone");
+    public final double SAMPLE_ARM_UP = loader.getDoubleProperty("sampleArmUp");
+    public final double SAMPLE_ARM_DOWN = loader.getDoubleProperty("sampleArmDown");
 
     protected final double kP = loader.getDoubleProperty("pidProportional");
     protected final double kI = loader.getDoubleProperty("pidIntegral");

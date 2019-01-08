@@ -1,11 +1,8 @@
 package org.firstinspires.ftc.teamcode.util;
 import com.qualcomm.hardware.bosch.BNO055IMU;
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.util.ReadWriteFile;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.internal.system.AppUtil;
 import org.firstinspires.ftc.teamcode.PIDAngleControl;
 
@@ -161,7 +158,7 @@ public class IMUControl {
         getPosition(position,imu1,imu2,false);
         this.currentAngle = position[0];
 
-        PIDControl.onSensorChanged(position[0]);
+        PIDControl.newErrorValue(position[0]);
         imputs[2] = PIDControl.getValue(2.9,1.6,.9,-.6);
         this.rotation = imputs[2];
 
@@ -188,7 +185,7 @@ public class IMUControl {
         this.desiredAngle += imput[2]/2;
 
         PIDControl.startPID(desiredAngle);
-        PIDControl.onSensorChanged(angle);
+        PIDControl.newErrorValue(angle);
 
         imput[2] = PIDControl.getValue(2.9,1.6,.9,-.6);
 

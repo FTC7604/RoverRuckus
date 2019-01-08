@@ -2,6 +2,8 @@ package org.firstinspires.ftc.teamcode;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 
+import static java.lang.Math.PI;
+
 public class PIDAngleControl {
     private double error, integral, derivative;
     private double desiredAngle;
@@ -42,11 +44,16 @@ public class PIDAngleControl {
         return derivative;
     }
 
-    public void onSensorChanged(double currentAngle){
+    public boolean shouldTerminate(double precision)
+    {
+        return lastTime != -1 && (error < precision);
+    }
+
+    public void newErrorValue(double currentAngle) {
         long currentTime = System.currentTimeMillis();
         double elapsedTime = 0.001f * (currentTime - lastTime);
 
-        error = desiredAngle - currentAngle;
+        error = getPIDError(currentAngle);
 
         if (lastError != -1) {
             integral = integral + (error * elapsedTime);
@@ -55,5 +62,22 @@ public class PIDAngleControl {
 
         lastTime = currentTime;
         lastError = error;
+    }
+
+    private double getPIDError(double value)
+    {
+        double error = desiredAngle - value;
+        if(error < -PI)
+        {
+            return error + (2 * PI);
+        }
+        else if (error > PI)
+        {
+            return error - (2 * PI);
+        }
+        else
+        {
+            return error;
+        }
     }
 }

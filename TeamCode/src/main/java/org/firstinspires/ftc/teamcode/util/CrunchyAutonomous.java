@@ -1,18 +1,8 @@
 package org.firstinspires.ftc.teamcode.util;
 
-import com.qualcomm.hardware.bosch.BNO055IMU;
-import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.HardwareMap;
-import com.qualcomm.robotcore.hardware.Servo;
-import com.qualcomm.robotcore.util.ReadWriteFile;
-
-import org.firstinspires.ftc.robotcore.internal.system.AppUtil;
 import org.firstinspires.ftc.teamcode.PIDAngleControl;
 
-import java.io.File;
-
+import static java.lang.Math.PI;
 import static java.lang.Math.abs;
 import static java.lang.Math.signum;
 import static java.lang.Math.toRadians;
@@ -78,10 +68,10 @@ public class CrunchyAutonomous extends Crunchy
         PIDAngleControl pidControl = new PIDAngleControl();
         pidControl.startPID(desiredAngle);
 
-        while(opMode.ensureOpModeIsActive() && abs(desiredAngle - position[0]) >= precision)
+        while(opMode.ensureOpModeIsActive() && !pidControl.shouldTerminate(precision))
         {
             position = getIMUPosition();
-            pidControl.onSensorChanged(position[0]);
+            pidControl.newErrorValue(position[0]);
             double turnVal = pidControl.getValue(kP, kI, kD, pidMult);
             opMode.telemetry.addData("konstants", kP + " " + kI + " " + kD + " " + pidMult);
             opMode.telemetry.addData("error", pidControl.getError());

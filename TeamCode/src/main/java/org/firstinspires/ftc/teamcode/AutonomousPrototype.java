@@ -87,9 +87,7 @@ public class AutonomousPrototype extends DWAILinearOpMode
         step("Image detection");
         crunchy.phoneMount.setPosition(crunchy.OPEN_PHONE);
 
-        SamplePosition mineralPosition = null;
-        while(ensureOpModeIsActive())
-        {
+        SamplePosition mineralPosition;
             switch (GOLD_POSITION)
             {
                 case 1:
@@ -106,11 +104,6 @@ public class AutonomousPrototype extends DWAILinearOpMode
                     break;
             }
 
-            telemetry.addData("Detected", mineralPosition);
-            telemetry.update();
-        }
-        tracking.shutdownTfod();
-
         crunchy.phoneMount.setPosition(crunchy.CLOSED_PHONE);
 
         telemetry.addData("Sample position", mineralPosition);
@@ -122,6 +115,8 @@ public class AutonomousPrototype extends DWAILinearOpMode
         step("Release and drive");
         crunchy.hook.setPosition(crunchy.HOOK_OPEN);
         crunchy.driveForwardForDistance(RELEASE_AND_DRIVE_POWER, RELEASE_AND_DRIVE_DISTANCE);
+
+        crunchy.sampleArm.setPosition(crunchy.SAMPLE_ARM_DOWN);
 
         switch (mineralPosition)
         {
