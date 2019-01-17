@@ -103,11 +103,16 @@ public class RRFullTeleop extends LinearOpMode {
 
             RunHook();
 
+            totalLoops++;
+
             telemetry.addData("intake lift", crunchy.intakeLift.getCurrentPosition());
             telemetry.addData("Encoder Position", crunchy.liftLeft.getCurrentPosition());
+            telemetry.addData("Loops per second", totalLoops/time);
             telemetry.update();
         }
     }
+
+    private double totalLoops = 0;
     
     private void runIntake(){
         int intakePosition = crunchy.intake.getCurrentPosition() % (1440 / 2);
@@ -198,8 +203,7 @@ public class RRFullTeleop extends LinearOpMode {
         }
     }
 
-    private boolean currentDriveMode = true;
-    private boolean pastDriveMode = true;
+    private boolean pastLoop = true;
     
     private boolean fieldCentric = false;
 
@@ -209,15 +213,12 @@ public class RRFullTeleop extends LinearOpMode {
 
     private void RunDrive () {
 
-
-        currentDriveMode = gamepad1.left_bumper;
-
-        if(currentDriveMode && !pastDriveMode){
+        if(gamepad1.left_bumper && !pastLoop){
 
             if(!fieldCentric)fieldCentric = true;
             else fieldCentric = false;
         }
-        pastDriveMode = currentDriveMode;
+        pastLoop = gamepad1.left_bumper;
 
         if(!fieldCentric){
             controller[1] = (((-gamepad1.left_stick_y) * (abs(-gamepad1.left_stick_y)) + ((-gamepad1.right_stick_y) * (abs(-gamepad1.right_stick_y)))) / 2);
@@ -251,12 +252,6 @@ public class RRFullTeleop extends LinearOpMode {
             crunchy.frontRight.setPower(controller[1] + controller[0] - controller[2]);
             crunchy.backRight.setPower(controller[1] - controller[0] - controller[2]);
         }
-
-
-
-        telemetry.addData("controller_x", controller[0]);
-        telemetry.addData("controller_y", controller[1]);
-        telemetry.addData("controller_r", controller[2]);
     }
 
     private void HoldPhoneAndSample () {
