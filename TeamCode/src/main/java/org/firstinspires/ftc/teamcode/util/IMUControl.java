@@ -47,40 +47,42 @@ public class IMUControl {
 
     }
 
-    public double[] compensate(double[] imput, double angle) {
-        double x1 = imput[0];
-        double y1 = -1 * imput[1];
+    public final double[] compensate(double[] imput, double angle) {
+        //imput[0] is x, imput[1] is y
+        double x = imput[0];
+        double y = imput[1];
 
-        double x2 = 0;
-        double y2 = 0;
+        y = -1 * y;
 
-        if(x1 != 0) {
-            if(x1 > 0) {
-                x2 = sqrt(x1 * x1 + y1 * y1) * cos(atan(y1 / x1) - angle);
-                y2 = sqrt(x1 * x1 + y1 * y1) * sin(atan(y1 / x1) - angle);
+        if(x != 0) {
+            if(x > 0) {
+                x = sqrt(x * x + y * y) * cos(atan(y / x) - angle);
+                y = sqrt(x * x + y * y) * sin(atan(y / x) - angle);
             }
-            else if(x1 < 0) {
-                x2 = sqrt(x1 * x1 + y1 * y1) * cos(PI + atan(y1 / x1) - angle);
-                y2 = sqrt(x1 * x1 + y1 * y1) * sin(PI + atan(y1 / x1) - angle);
+            else if(x < 0) {
+                x = sqrt(x * x + y * y) * cos(PI + atan(y / x) - angle);
+                y = sqrt(x * x + y * y) * sin(PI + atan(y / x) - angle);
             }
         }
         else{
-            if(y1 > 0){
-                x2 = abs(y1) * cos(PI/2 - angle);
-                y2 = abs(y1) * sin(PI/2 - angle);
+            if(y > 0){
+                x = abs(y) * cos(PI/2 - angle);
+                y = abs(y) * sin(PI/2 - angle);
             }
-            else if(y1 < 0){
-                x2 = abs(y1) * cos(3*PI/2 - angle);
-                y2 = abs(y1) * sin(3*PI/2 - angle);
+            else if(y < 0){
+                x = abs(y) * cos(3*PI/2 - angle);
+                y = abs(y) * sin(3*PI/2 - angle);
             }
             else{
-                x2 = 0;
-                y2 = 0;
+                x = 0;
+                y = 0;
             }
         }
 
-        imput[0] = x2;
-        imput[1] = -1 * y2;
+        y = -1 * y;
+
+        imput[0] = x;
+        imput[1] = y;
 
         return imput;
     }
