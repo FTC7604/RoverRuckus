@@ -105,7 +105,7 @@ public class RRFullTeleop extends LinearOpMode {
 
             totalLoops++;
 
-            if(totalLoops % 100 == 0) {
+            if(totalLoops % 200 == 0) {
                 telemetry.addData("Loops per second", 1000 * totalLoops / time);
                 telemetry.update();
             }
