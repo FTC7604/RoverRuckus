@@ -105,10 +105,10 @@ public class RRFullTeleop extends LinearOpMode {
 
             totalLoops++;
 
-            telemetry.addData("intake lift", crunchy.intakeLift.getCurrentPosition());
-            telemetry.addData("Encoder Position", crunchy.liftLeft.getCurrentPosition());
-            telemetry.addData("Loops per second", 1000 * totalLoops/time);
-            telemetry.update();
+            if(totalLoops % 100 == 0) {
+                telemetry.addData("Loops per second", 1000 * totalLoops / time);
+                telemetry.update();
+            }
         }
     }
 
