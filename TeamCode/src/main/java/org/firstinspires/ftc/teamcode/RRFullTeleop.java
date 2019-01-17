@@ -200,6 +200,7 @@ public class RRFullTeleop extends LinearOpMode {
 
     private boolean currentDriveMode = true;
     private boolean pastDriveMode = true;
+    
     private boolean fieldCentric = false;
 
     private double[] controller = new double[3];
@@ -238,16 +239,20 @@ public class RRFullTeleop extends LinearOpMode {
         if(fieldCentric) {
             IMUControl.getPosition(position, crunchy.imu1, crunchy.imu2, true);
             IMUControl.imuDrive(motors, controller, position[0], false, true);
+
+            crunchy.frontLeft.setPower(motors[0]);
+            crunchy.backLeft.setPower(motors[1]);
+            crunchy.frontRight.setPower(motors[2]);
+            crunchy.backRight.setPower(motors[3]);
         }
         else{
-            IMUControl.getPosition(position, crunchy.imu1, crunchy.imu2, true);
-            IMUControl.imuDrive(motors, controller, position[0], false, false);
+            crunchy.frontLeft.setPower(controller[1] - controller[0] + controller[2]);
+            crunchy.backLeft.setPower(controller[1] + controller[0] + controller[2]);
+            crunchy.frontRight.setPower(controller[1] + controller[0] - controller[2]);
+            crunchy.backRight.setPower(controller[1] - controller[0] - controller[2]);
         }
 
-        crunchy.frontLeft.setPower(motors[0]);
-        crunchy.backLeft.setPower(motors[1]);
-        crunchy.frontRight.setPower(motors[2]);
-        crunchy.backRight.setPower(motors[3]);
+
 
         telemetry.addData("controller_x", controller[0]);
         telemetry.addData("controller_y", controller[1]);
