@@ -40,6 +40,7 @@ import com.qualcomm.robotcore.hardware.TouchSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.util.Crunchy;
+import org.firstinspires.ftc.teamcode.util.IMUControl;
 import org.firstinspires.ftc.teamcode.util.PropertiesLoader;
 import org.firstinspires.ftc.teamcode.util.vision.VisionTarget;
 import org.firstinspires.ftc.teamcode.util.vision.VisionTracking;
@@ -48,6 +49,7 @@ import java.util.Locale;
 
 import static java.lang.Math.abs;
 import static java.lang.Math.ceil;
+import static java.lang.Math.pow;
 import static java.lang.Math.signum;
 
 @TeleOp(name="RR Full Teleop", group="Linear Opmode")
@@ -56,7 +58,7 @@ import static java.lang.Math.signum;
 public class RRFullTeleop extends LinearOpMode {
 
     private ElapsedTime runtime = new ElapsedTime();
-
+    private org.firstinspires.ftc.teamcode.util.IMUControl IMUControl = new IMUControl();
     //hook
     private boolean hookCurrState = false;
     private boolean hookPrevState = false;
@@ -101,11 +103,16 @@ public class RRFullTeleop extends LinearOpMode {
 
             RunHook();
 
-            telemetry.addData("intake lift", crunchy.intakeLift.getCurrentPosition());
-            telemetry.addData("Encoder Position", crunchy.liftLeft.getCurrentPosition());
-            telemetry.update();
+            totalLoops++;
+
+            if(totalLoops % 200 == 0) {
+                telemetry.addData("Loops per second", 1000 * totalLoops / time);
+                telemetry.update();
+            }
         }
     }
+
+    private double totalLoops = 0;
     
     private void runIntake(){
         int intakePosition = crunchy.intake.getCurrentPosition() % (1440 / 2);
@@ -196,25 +203,55 @@ public class RRFullTeleop extends LinearOpMode {
         }
     }
 
-    private void RunDrive () {
-        double y = (((-gamepad1.left_stick_y)*(abs(-gamepad1.left_stick_y))+((-gamepad1.right_stick_y)*(abs(-gamepad1.right_stick_y))))/2);
-        double x = (((-gamepad1.left_stick_x)*(abs(-gamepad1.left_stick_x))+((-gamepad1.right_stick_x)*(abs(-gamepad1.right_stick_x))))/2);
-        double turnVal = (((-gamepad1.left_stick_y)-(-gamepad1.right_stick_y))/2);
+    private boolean pastLoop = true;
+    
+    private boolean fieldCentric = false;
 
-        if(gamepad1.right_bumper) {
-            y *= SLOW_MULTIPLIER;
-            x *= SLOW_MULTIPLIER;
-            turnVal *= abs(SLOW_MULTIPLIER);
+    private double[] controller = new double[3];
+    private double[] motors = new double[4];
+    private double[] position = new double[3];
+
+    private void RunDrive () {
+
+        if(gamepad1.left_bumper && !pastLoop){
+
+            if(!fieldCentric)fieldCentric = true;
+            else fieldCentric = false;
+        }
+        pastLoop = gamepad1.left_bumper;
+
+        if(!fieldCentric){
+            controller[1] = (((-gamepad1.left_stick_y) * (abs(-gamepad1.left_stick_y)) + ((-gamepad1.right_stick_y) * (abs(-gamepad1.right_stick_y)))) / 2);
+            controller[0] = (((-gamepad1.left_stick_x) * (abs(-gamepad1.left_stick_x)) + ((-gamepad1.right_stick_x) * (abs(-gamepad1.right_stick_x)))) / 2);
+            controller[2] = (((-gamepad1.left_stick_y) - (-gamepad1.right_stick_y)) / 2);
+        }
+        else {
+            controller[0] = pow(-gamepad1.left_stick_x, 3); //desired x movement
+            controller[1] = pow(-gamepad1.left_stick_y, 3); //desired y movement
+            controller[2] = pow(gamepad1.right_stick_x, 3); //desired rotation
         }
 
-        crunchy.frontLeft.setPower(y-x+turnVal);
-        crunchy.backLeft.setPower(y+x+turnVal);
-        crunchy.frontRight.setPower(y+x-turnVal);
-        crunchy.backRight.setPower(y-x-turnVal);
+        if(gamepad1.right_bumper) {
+            controller[0] *= SLOW_MULTIPLIER;
+            controller[1] *= SLOW_MULTIPLIER;
+            controller[2] *= abs(SLOW_MULTIPLIER);
+        }
 
-        telemetry.addData("y", y);
-        telemetry.addData("x", x);
-        telemetry.addData("turnval", turnVal);
+        if(fieldCentric) {
+            IMUControl.getPosition(position, crunchy.imu1, crunchy.imu2, true);
+            IMUControl.imuDrive(motors, controller, position[0], false, true);
+
+            crunchy.frontLeft.setPower(motors[0]);
+            crunchy.backLeft.setPower(motors[1]);
+            crunchy.frontRight.setPower(motors[2]);
+            crunchy.backRight.setPower(motors[3]);
+        }
+        else{
+            crunchy.frontLeft.setPower(controller[1] - controller[0] + controller[2]);
+            crunchy.backLeft.setPower(controller[1] + controller[0] + controller[2]);
+            crunchy.frontRight.setPower(controller[1] + controller[0] - controller[2]);
+            crunchy.backRight.setPower(controller[1] - controller[0] - controller[2]);
+        }
     }
 
     private void HoldPhoneAndSample () {
