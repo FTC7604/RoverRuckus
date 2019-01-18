@@ -63,7 +63,7 @@ public class RRFullTeleop extends LinearOpMode {
     private boolean hookIsOpen = true;
 
     //intake lift toggle controls
-    private boolean intakeTargetIsUp = true;
+    private boolean intakeTargetIsUp = false;
     private boolean intakeCurrState = false;
     private boolean intakePrevState = false;
 
@@ -134,7 +134,7 @@ public class RRFullTeleop extends LinearOpMode {
         double intakeliftDown = -0.4;//for going down
 
         int intakeUpperLimit = 0;//for the robot intake all the way in this is how the game starts
-        int intakeLowerLimit = -1500;       //if the lift is the above where is should be
+        int intakeLowerLimit = -1800;       //if the lift is the above where is should be
 //for the robot intake all the way extended, when picking up particles.
 
 
@@ -158,7 +158,7 @@ public class RRFullTeleop extends LinearOpMode {
     }
 
     private void RunLift () {
-        int liftUpperLimit = (3889);//I just did the math for the values because android studio got mad
+        int liftUpperLimit = (3689);//I just did the math for the values because android studio got mad
         int liftLowerLimit = (0 + 75);//the lift is all the way down, the plus is to compensate for lag.
 
         //Lifter controls, Negative is up, positive is down Hang is the other way around

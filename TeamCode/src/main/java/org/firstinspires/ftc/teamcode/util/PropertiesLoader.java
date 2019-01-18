@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.util;
 import android.content.Context;
 import android.content.res.Resources;
 import android.os.Environment;
+import android.util.Log;
 
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -32,31 +33,73 @@ public class PropertiesLoader
     }
 
     public boolean getBooleanProperty(String name) {
-        return Boolean.parseBoolean(getStringProperty(name));
+        try
+        {
+            return Boolean.parseBoolean(getStringProperty(name));
+        }
+        catch (NumberFormatException e)
+        {
+            throw new IllegalArgumentException("Invalid boolean: " + getStringProperty(name) + " for property: " + name);
+        }
     }
 
     public int getIntegerProperty(String name)
     {
-        return Integer.parseInt(getStringProperty(name));
+        try
+        {
+            return Integer.parseInt(getStringProperty(name));
+        }
+        catch (NumberFormatException e)
+        {
+            throw new IllegalArgumentException("Invalid integer: " + getStringProperty(name) + " for property: " + name);
+        }
     }
 
     public long getLongProperty(String name)
     {
-        return Long.parseLong(getStringProperty(name));
+        try
+        {
+            return Long.parseLong(getStringProperty(name));
+        }
+        catch (NumberFormatException e)
+        {
+            throw new IllegalArgumentException("Invalid long: " + getStringProperty(name) + " for property: " + name);
+        }
     }
 
     public float getFloatProperty(String name)
     {
-        return Float.parseFloat(getStringProperty(name));
+        try
+        {
+            return Float.parseFloat(getStringProperty(name));
+        }
+        catch (NumberFormatException e)
+        {
+            throw new IllegalArgumentException("Invalid float: " + getStringProperty(name) + " for property: " + name);
+        }
     }
 
     public double getDoubleProperty(String name)
     {
-        return Double.parseDouble(getStringProperty(name));
+        try
+        {
+            return Double.parseDouble(getStringProperty(name));
+        }
+        catch (NumberFormatException e)
+        {
+            throw new IllegalArgumentException("Invalid double: " + getStringProperty(name) + " for property: " + name);
+        }
     }
 
     public String getStringProperty(String name)
     {
-        return properties.getProperty(name);
+        try
+        {
+            return properties.getProperty(name);
+        }
+        catch (NullPointerException e)
+        {
+            throw new IllegalArgumentException("Cannot find property with name " + name);
+        }
     }
 }

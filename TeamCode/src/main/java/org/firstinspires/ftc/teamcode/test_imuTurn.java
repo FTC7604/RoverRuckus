@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -14,7 +15,7 @@ import org.firstinspires.ftc.teamcode.util.IMUControl;
 import static java.lang.Math.*;
 
 @Autonomous(name = "Auto turn", group = "Liner Op")
-
+@Disabled
 public class test_imuTurn extends LinearOpMode{
     //creates the runtime
     private ElapsedTime runtime = new ElapsedTime();
@@ -335,11 +336,11 @@ public class test_imuTurn extends LinearOpMode{
         IMUControl.getPosition(position,imu1,imu2,true);
         double desiredTurnPosition = turnAngle + position[0];
 
-        PIDControl.startPID(desiredTurnPosition);
+        PIDControl.startPID();
 
         do{
             IMUControl.getPosition(position,imu1,imu2,false);
-            PIDControl.newErrorValue(position[0]);
+            PIDControl.onSensorChanged(position[0]);
             imputs[2] = PIDControl.getValue(2.9,1.5,.9,.6);
 
             IMUControl.imuDrive(motors,imputs,0,false,false);

@@ -4,6 +4,7 @@ import org.firstinspires.ftc.teamcode.PIDAngleControl;
 
 import static java.lang.Math.PI;
 import static java.lang.Math.abs;
+import static java.lang.Math.max;
 import static java.lang.Math.signum;
 import static java.lang.Math.toRadians;
 
@@ -15,6 +16,16 @@ public class CrunchyAutonomous extends Crunchy
     {
         super(opMode);
         this.opMode = opMode;
+    }
+
+    public void driveForwardForTime(double power, long time)
+    {
+        power *= signum(time);
+        time = abs(time);
+
+        drive(power);
+        opMode.sleep(time);
+        stopAndResetEncoders();
     }
 
     public void driveForwardForDistance(double power, int distance)
@@ -33,6 +44,21 @@ public class CrunchyAutonomous extends Crunchy
         stopAndResetEncoders();
     }
 
+    public void strafeRight(double power)
+    {
+        double x = -power * abs(power);
+        drive(-x, x, x, -x);
+    }
+
+    public void strafeRightForTime(double power, long time)
+    {
+        power *= signum(time);
+        time = abs(time);
+
+        strafeRight(power);
+        opMode.sleep(time);
+        stopAndResetEncoders();
+    }
 
     public void strafeRightForDistance(double power, int distance)
     {
@@ -40,15 +66,12 @@ public class CrunchyAutonomous extends Crunchy
         power *= signum(distance);
         distance = abs(distance);
 
-        double x = -power * abs(power);
-
         double currentPosition;
         while (opMode.ensureOpModeIsActive() && (currentPosition = getDriveEncoderValue()) < distance)
         {
             double remaining = distance - currentPosition;
             double ratio = (remaining + distance) / (2.0 * distance);
-            double val = x * ratio;
-            drive(-val, val, val, -val);
+            strafeRight(power * ratio);
         }
         stopAndResetEncoders();
     }
@@ -61,19 +84,61 @@ public class CrunchyAutonomous extends Crunchy
 
     public void turnRadians(double turnAngle, double precision)
     {
+        if (PID_ENABLED)
+        {
+            turnRadiansPID(turnAngle, precision);
+        }
+        else
+        {
+            turnRadiansNoPID(turnAngle, precision);
+        }
+    }
+
+    private void turnRadiansNoPID(double turnAngle, double precision)
+    {
+        turnAngle *= -1;
+
+        double[] position = getIMUPosition();
+        double desiredAngle = turnAngle + position[0];
+
+        drive(PID_DISABLED_TURN_SPEED, -PID_DISABLED_TURN_SPEED);
+
+        double val;
+        while (opMode.ensureOpModeIsActive() && abs(val = getNormalizedError(desiredAngle, position[0])) > precision)
+        {
+            position = getIMUPosition();
+            opMode.telemetry.addData("Desired angle", desiredAngle);
+            opMode.telemetry.addData("Position", position[0]);
+            opMode.telemetry.addData("Normalized error", val);
+            opMode.telemetry.update();
+        }
+
+        stopAndResetEncoders();
+    }
+
+    private void turnRadiansPID(double turnAngle, double precision)
+    {
         turnAngle *= -1;
 
         double[] position = getIMUPosition();
         double desiredAngle = turnAngle + position[0];
         PIDAngleControl pidControl = new PIDAngleControl();
-        pidControl.startPID(desiredAngle);
+        pidControl.startPID();
 
-        while(opMode.ensureOpModeIsActive() && !pidControl.shouldTerminate(precision))
+        double pidMult = PID_MULT;
+
+        if(PID_MULT_SCALING)
+        {
+            pidMult /= (turnAngle / (PI / 4));
+        }
+
+        while(opMode.ensureOpModeIsActive() && !pidControl.shouldTerminate(precision, PID_MAX_DIFFERENTIAL))
         {
             position = getIMUPosition();
-            pidControl.newErrorValue(position[0]);
+            pidControl.onSensorChanged(getNormalizedError(desiredAngle, position[0]));
             double turnVal = pidControl.getValue(kP, kI, kD, pidMult);
-            opMode.telemetry.addData("konstants", kP + " " + kI + " " + kD + " " + pidMult);
+            turnVal = max(abs(turnVal), PID_MIN_POWER) * signum(turnVal);
+            opMode.telemetry.addData("konstants", kP + " " + kI + " " + kD + " " + PID_MULT);
             opMode.telemetry.addData("error", pidControl.getError());
             opMode.telemetry.addData("integral", pidControl.getIntegral());
             opMode.telemetry.addData("derivative", pidControl.getDerivative());
@@ -83,5 +148,22 @@ public class CrunchyAutonomous extends Crunchy
         }
 
         stopAndResetEncoders();
+    }
+
+    private double getNormalizedError(double desiredAngle, double value)
+    {
+        double error = desiredAngle - value;
+        if(error < -PI)
+        {
+            return error + (2 * PI);
+        }
+        else if (error > PI)
+        {
+            return error - (2 * PI);
+        }
+        else
+        {
+            return error;
+        }
     }
 }

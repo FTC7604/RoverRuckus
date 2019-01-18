@@ -149,7 +149,7 @@ public class IMUControl {
         getPosition(position,imu1,imu2,false);
 
         this.desiredAngle = turnAngle + position[0];
-        PIDControl.startPID(desiredAngle);
+        PIDControl.startPID();
     }
     public double[] IMUturn(double[] motors,BNO055IMU imu1,BNO055IMU imu2){
         double[] imputs = new double[3];
@@ -158,7 +158,7 @@ public class IMUControl {
         getPosition(position,imu1,imu2,false);
         this.currentAngle = position[0];
 
-        PIDControl.newErrorValue(position[0]);
+        PIDControl.onSensorChanged(position[0]);
         imputs[2] = PIDControl.getValue(2.9,1.6,.9,-.6);
         this.rotation = imputs[2];
 
@@ -184,8 +184,8 @@ public class IMUControl {
     public double[]stabilize(double[] imput, double angle){
         this.desiredAngle += imput[2]/2;
 
-        PIDControl.startPID(desiredAngle);
-        PIDControl.newErrorValue(angle);
+        PIDControl.startPID();
+        PIDControl.onSensorChanged(angle);
 
         imput[2] = PIDControl.getValue(2.9,1.6,.9,-.6);
 
