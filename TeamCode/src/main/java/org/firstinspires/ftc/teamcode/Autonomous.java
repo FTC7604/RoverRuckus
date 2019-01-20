@@ -276,10 +276,10 @@ public class Autonomous extends DWAILinearOpMode
             mineralPosition = tracking.detectMineral();
             telemetry.update();
 
-            if (runtime.seconds() >= DETECT_TIMEOUT)
-            {
-                break;
-            }
+//            if (runtime.seconds() >= DETECT_TIMEOUT)
+//            {
+//                break;
+//            }
         }
 
         telemetry.clearAll();
