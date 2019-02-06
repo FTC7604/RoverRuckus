@@ -39,6 +39,7 @@ public class Crunchy
     public Servo sampleArm = null;
     public Servo leftOutput = null;
     public Servo rightOutput = null;
+    public Servo marker = null;
 
     public BNO055IMU imu1, imu2;
 
@@ -55,15 +56,17 @@ public class Crunchy
     public final double CLOSED_PHONE = loader.getDoubleProperty("closedPhone");
     public final double SAMPLE_ARM_UP = loader.getDoubleProperty("sampleArmUp");
     public final double SAMPLE_ARM_DOWN = loader.getDoubleProperty("sampleArmDown");
+    public final double MARKER_OPEN = loader.getDoubleProperty("markerOpen");
+    public final double MARKER_CLOSED = loader.getDoubleProperty("markerClosed");
+
 
     protected final boolean PID_ENABLED = loader.getBooleanProperty("pidEnabled");
-    protected final double PID_DISABLED_TURN_SPEED = loader.getDoubleProperty("pidDisabledTurnSpeed");
+    protected final double PID_PRECISION_THRESHOLD_MULT = loader.getDoubleProperty("pidPrecisionThresholdMult");
     protected final double kP = loader.getDoubleProperty("pidProportional");
     protected final double kI = loader.getDoubleProperty("pidIntegral");
     protected final double kD = loader.getDoubleProperty("pidDifferential");
     protected final double PID_MULT = loader.getDoubleProperty("pidMultiplier");
     protected final double PID_MIN_POWER = loader.getDoubleProperty("pidMinPower");
-    protected final boolean PID_MULT_SCALING = loader.getBooleanProperty("pidMultScaling");
     protected final double PID_MAX_DIFFERENTIAL = loader.getDoubleProperty("pidMaxDifferential");
 
     public Crunchy(OpMode opMode)
@@ -93,6 +96,7 @@ public class Crunchy
         sampleArm = hardwareMap.get(Servo.class, "sa");
         leftOutput = hardwareMap.get(Servo.class, "lo");
         rightOutput = hardwareMap.get(Servo.class, "ro");
+        marker = hardwareMap.get(Servo.class, "mk");
 
         //sets the direction for the lift
         liftLeft.setDirection(DcMotor.Direction.FORWARD);

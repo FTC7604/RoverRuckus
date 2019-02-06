@@ -12,6 +12,7 @@ public class TurnTest extends DWAILinearOpMode
     private CrunchyAutonomous crunchy;
 
     private PropertiesLoader loader = new PropertiesLoader("TurnTest");
+    private final double POWER = loader.getDoubleProperty("power");
     private final double TURN_PRECISION_DEGREES = loader.getDoubleProperty("turnPrecisionDegrees");
     private final double ANGLE = loader.getDoubleProperty("angle");
 
@@ -24,7 +25,7 @@ public class TurnTest extends DWAILinearOpMode
     @Override
     public void mainOpMode() throws InterruptedException
     {
-        crunchy.turnDegrees(ANGLE, TURN_PRECISION_DEGREES);
+        crunchy.turnDegrees(POWER, ANGLE, TURN_PRECISION_DEGREES);
     }
 
     @Override

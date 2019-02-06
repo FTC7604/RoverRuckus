@@ -1,62 +1,41 @@
 package org.firstinspires.ftc.teamcode;
 
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.DcMotor;
 
 import org.firstinspires.ftc.teamcode.util.CrunchyAutonomous;
 import org.firstinspires.ftc.teamcode.util.DWAILinearOpMode;
-import org.firstinspires.ftc.teamcode.util.PropertiesLoader;
 
-@TeleOp(name = "random autonomous experiment")
+@TeleOp(name = "servo test")
 public class AutonomousExperimentation extends DWAILinearOpMode
 {
     private CrunchyAutonomous crunchy;
+
+    private boolean previous = false;
+    private boolean open = false;
 
     @Override
     public void initOpMode() throws InterruptedException
     {
         crunchy = new CrunchyAutonomous(this);
-
-        crunchy.intakeLift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        crunchy.liftLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        crunchy.liftRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        crunchy.intakeLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        crunchy.liftLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        crunchy.liftRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        crunchy.marker.setPosition(crunchy.MARKER_CLOSED);
     }
 
     @Override
     public void mainOpMode() throws InterruptedException
     {
-        setIntakeLiftPosition(false);
-        sleep(2000);
-        setIntakeLiftPosition(true);
-        sleep(2000);
-
-    }
-
-    private void setIntakeLiftPosition(boolean intakeTargetIsUp)
-    {
-        double intakeLiftUp = 1;//power level for going up
-        double intakeLiftDown = -0.4;//for going down
-
-        int intakeUpperLimit = 0;//for the robot intake all the way in this is how the game starts
-        int intakeLowerLimit = -1800;
-
         while (ensureOpModeIsActive())
         {
-            if ((intakeTargetIsUp) && (crunchy.intakeLift.getCurrentPosition() < intakeUpperLimit))
+            //this block of code controls the position of the hook with a toggle switch.
+            boolean current = gamepad2.y;
+            //toggle the hook position with gamepad2.y
+            if ((gamepad2.y) && current != previous)
             {
-                crunchy.intakeLift.setPower(intakeLiftUp);
-            } else if ((!intakeTargetIsUp) && (crunchy.intakeLift.getCurrentPosition() > intakeLowerLimit))
-            {
-                crunchy.intakeLift.setPower(intakeLiftDown);
-            } else
-            {
-                crunchy.intakeLift.setPower(0);
-                break;
+                open = !open;//change the hook target
             }
+            previous = current;
+
+            if (open) crunchy.marker.setPosition(crunchy.MARKER_OPEN);
+            else crunchy.marker.setPosition(crunchy.MARKER_CLOSED);
         }
     }
 

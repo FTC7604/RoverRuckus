@@ -1,8 +1,11 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.robotcontroller.internal.FtcRobotControllerActivity;
+import org.firstinspires.ftc.robotcore.internal.opmode.OpModeManagerImpl;
 import org.firstinspires.ftc.teamcode.util.CrunchyAutonomous;
 import org.firstinspires.ftc.teamcode.util.DWAILinearOpMode;
 import org.firstinspires.ftc.teamcode.util.PropertiesLoader;
@@ -18,10 +21,12 @@ public class Autonomous extends DWAILinearOpMode
     private final long STEP_MODE = loader.getLongProperty("stepMode");
     private final double DEPLOY_LIFT_POWER = loader.getDoubleProperty("deployLiftPower");
     private final int GOLD_POSITION = loader.getIntegerProperty("goldPosition");
-    private final int DETECT_TIMEOUT = loader.getIntegerProperty("detectTimeout");
+    private final long DETECT_TIMEOUT = loader.getLongProperty("detectTimeout");
+    private final boolean TRANSITION_TO_TELEOP = loader.getBooleanProperty("transitionToTeleop");
 
     private final double RELEASE_AND_DRIVE_POWER = loader.getDoubleProperty("releaseAndDrivePower");
     private final int RELEASE_AND_DRIVE_DISTANCE = loader.getIntegerProperty("releaseAndDriveDistance");
+    private final double ROTATE_TO_BALL_POWER = loader.getDoubleProperty("rotateToBallPower");
     private final double ROTATE_TO_BALL_PRECISION = loader.getDoubleProperty("rotateToBallPrecision");
     private final double ROTATE_TO_BALL_ANGLE = loader.getDoubleProperty("rotateToBallAngle");
     private final double STRAFE_TO_BALL_POWER = loader.getDoubleProperty("strafeToBallPower");
@@ -54,7 +59,9 @@ public class Autonomous extends DWAILinearOpMode
     private final double RIGHT_BRANCH_DRIVE_TOWARDS_WALL_POWER = loader.getDoubleProperty("rightBranchDriveTowardsWallPower");
     private final int RIGHT_BRANCH_DRIVE_TOWARDS_WALL_DISTANCE = loader.getIntegerProperty("rightBranchDriveTowardsWallDistance");
 
+    private final double CRATER_POSITION_TURN_TOWARDS_DEPOT_POWER = loader.getDoubleProperty("craterPositionTurnTowardsDepotPower");
     private final double CRATER_POSITION_TURN_TOWARDS_DEPOT_ANGLE = loader.getDoubleProperty("craterPositionTurnTowardsDepotAngle");
+    private final double DEPOT_POSITION_TURN_TOWARDS_DEPOT_POWER = loader.getDoubleProperty("depotPositionTurnTowardsDepotPower");
     private final double DEPOT_POSITION_TURN_TOWARDS_DEPOT_ANGLE = loader.getDoubleProperty("depotPositionTurnTowardsDepotAngle");
     private final double TURN_TOWARDS_DEPOT_PRECISION = loader.getDoubleProperty("turnTowardsDepotPrecision");
     private final double STRAFE_INTO_WALL_POWER = loader.getDoubleProperty("strafeIntoWallPower");
@@ -115,6 +122,11 @@ public class Autonomous extends DWAILinearOpMode
 
         telemetry.addData("Status", "You can press start now");
         telemetry.update();
+
+        if (TRANSITION_TO_TELEOP)
+        {
+            AutoTransitioner.transitionOnStop(this, "RR Full Teleop");
+        }
     }
 
     @Override
@@ -156,7 +168,7 @@ public class Autonomous extends DWAILinearOpMode
         crunchy.driveForwardForDistance(RELEASE_AND_DRIVE_POWER, RELEASE_AND_DRIVE_DISTANCE);
 
         step("Rotate to ball");
-        crunchy.turnDegrees(ROTATE_TO_BALL_ANGLE, ROTATE_TO_BALL_PRECISION);
+        crunchy.turnDegrees(ROTATE_TO_BALL_POWER, ROTATE_TO_BALL_ANGLE, ROTATE_TO_BALL_PRECISION);
 
         step("Strafe to ball");
         crunchy.strafeRightForDistance(STRAFE_TO_BALL_POWER, STRAFE_TO_BALL_DISTANCE);
@@ -205,13 +217,13 @@ public class Autonomous extends DWAILinearOpMode
         if (isCraterPosition)
         {
             step("[Crater Position] Turn towards depot");
-            crunchy.turnDegrees(CRATER_POSITION_TURN_TOWARDS_DEPOT_ANGLE, TURN_TOWARDS_DEPOT_PRECISION);
+            crunchy.turnDegrees(CRATER_POSITION_TURN_TOWARDS_DEPOT_POWER, CRATER_POSITION_TURN_TOWARDS_DEPOT_ANGLE, TURN_TOWARDS_DEPOT_PRECISION);
             step("[Crater Position] Strafe into wall");
             crunchy.strafeRightForTime(STRAFE_INTO_WALL_POWER, CRATER_POSITION_STRAFE_INTO_WALL_TIME);
         } else
         {
             step("[Depot Position] Turn towards depot");
-            crunchy.turnDegrees(DEPOT_POSITION_TURN_TOWARDS_DEPOT_ANGLE, TURN_TOWARDS_DEPOT_PRECISION);
+            crunchy.turnDegrees(DEPOT_POSITION_TURN_TOWARDS_DEPOT_POWER, DEPOT_POSITION_TURN_TOWARDS_DEPOT_ANGLE, TURN_TOWARDS_DEPOT_PRECISION);
             step("[Depot Position] Strafe into wall");
             crunchy.strafeRightForTime(STRAFE_INTO_WALL_POWER, DEPOT_POSITION_STRAFE_INTO_WALL_TIME);
         }
@@ -239,14 +251,13 @@ public class Autonomous extends DWAILinearOpMode
             crunchy.driveForwardForDistance(DRIVE_TOWARDS_DEPOT_POWER, DEPOT_POSITION_DRIVE_TOWARDS_DEPOT_DISTANCE);
         }
         step("Dispense");
-        dispense();
+        crunchy.marker.setPosition(crunchy.MARKER_OPEN);
+//        dispense();
 
         step("Drive towards crater");
         crunchy.driveForwardForDistance(DRIVE_TOWARDS_CRATER_POWER, DRIVE_TOWARDS_CRATER_DISTANCE);
         telemetry.addLine("This thing is done");
         telemetry.update();
-
-        sleep(1000);
     }
 
     private void dispense()
@@ -270,16 +281,17 @@ public class Autonomous extends DWAILinearOpMode
         runtime.reset();
         int mineralPosition = 0;
 
+        long startTime = System.currentTimeMillis();
         while (ensureOpModeIsActive() && (mineralPosition == 0 || runtime.seconds() < 2))
         {
             telemetry.addLine("Looping " + getRuntime());
             mineralPosition = tracking.detectMineral();
             telemetry.update();
 
-//            if (runtime.seconds() >= DETECT_TIMEOUT)
-//            {
-//                break;
-//            }
+            if(System.currentTimeMillis() - startTime >= DETECT_TIMEOUT)
+            {
+                break;
+            }
         }
 
         telemetry.clearAll();

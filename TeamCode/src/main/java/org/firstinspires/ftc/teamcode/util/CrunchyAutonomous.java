@@ -77,74 +77,53 @@ public class CrunchyAutonomous extends Crunchy
     }
 
     /* Positive turn direction is right (clockwise) */
-    public void turnDegrees(double turnAngle, double precision)
+    public void turnDegrees(double power, double turnAngle, double precision)
     {
-        turnRadians(toRadians(turnAngle), toRadians(precision));
+        turnRadians(power, toRadians(turnAngle), toRadians(precision));
     }
 
-    public void turnRadians(double turnAngle, double precision)
-    {
-        if (PID_ENABLED)
-        {
-            turnRadiansPID(turnAngle, precision);
-        }
-        else
-        {
-            turnRadiansNoPID(turnAngle, precision);
-        }
-    }
-
-    private void turnRadiansNoPID(double turnAngle, double precision)
+    public void turnRadians(double power, double turnAngle, double precision)
     {
         turnAngle *= -1;
 
         double[] position = getIMUPosition();
         double desiredAngle = turnAngle + position[0];
 
-        drive(PID_DISABLED_TURN_SPEED, -PID_DISABLED_TURN_SPEED);
+        PIDAngleControl pidControl = new PIDAngleControl();
+        if(PID_ENABLED)
+        {
+            pidControl.startPID();
+        }
 
-        double val;
-        while (opMode.ensureOpModeIsActive() && abs(val = getNormalizedError(desiredAngle, position[0])) > precision)
+        double error;
+        while (opMode.ensureOpModeIsActive() && abs(error = getNormalizedError(desiredAngle, position[0])) > (precision * PID_PRECISION_THRESHOLD_MULT))
         {
             position = getIMUPosition();
             opMode.telemetry.addData("Desired angle", desiredAngle);
             opMode.telemetry.addData("Position", position[0]);
-            opMode.telemetry.addData("Normalized error", val);
+            opMode.telemetry.addData("Normalized error", error);
             opMode.telemetry.update();
+
+            double ratio = signum(error) * ((abs(error) + abs(turnAngle)) / (2.0 * abs(turnAngle)));
+            drive(-power * ratio, power * ratio);
         }
 
-        stopAndResetEncoders();
-    }
-
-    private void turnRadiansPID(double turnAngle, double precision)
-    {
-        turnAngle *= -1;
-
-        double[] position = getIMUPosition();
-        double desiredAngle = turnAngle + position[0];
-        PIDAngleControl pidControl = new PIDAngleControl();
-        pidControl.startPID();
-
-        double pidMult = PID_MULT;
-
-        if(PID_MULT_SCALING)
+        if(PID_ENABLED)
         {
-            pidMult /= (turnAngle / (PI / 4));
-        }
-
-        while(opMode.ensureOpModeIsActive() && !pidControl.shouldTerminate(precision, PID_MAX_DIFFERENTIAL))
-        {
-            position = getIMUPosition();
-            pidControl.onSensorChanged(getNormalizedError(desiredAngle, position[0]));
-            double turnVal = pidControl.getValue(kP, kI, kD, pidMult);
-            turnVal = max(abs(turnVal), PID_MIN_POWER) * signum(turnVal);
-            opMode.telemetry.addData("konstants", kP + " " + kI + " " + kD + " " + PID_MULT);
-            opMode.telemetry.addData("error", pidControl.getError());
-            opMode.telemetry.addData("integral", pidControl.getIntegral());
-            opMode.telemetry.addData("derivative", pidControl.getDerivative());
-            opMode.telemetry.addData("turn", turnVal);
-            opMode.telemetry.update();
-            drive(turnVal, -turnVal);
+            while(opMode.ensureOpModeIsActive() && !pidControl.shouldTerminate(precision, PID_MAX_DIFFERENTIAL))
+            {
+                position = getIMUPosition();
+                pidControl.onSensorChanged(getNormalizedError(desiredAngle, position[0]));
+                double turnVal = pidControl.getValue(kP, kI, kD, PID_MULT);
+                turnVal = max(abs(turnVal), PID_MIN_POWER) * signum(turnVal);
+                opMode.telemetry.addData("konstants", kP + " " + kI + " " + kD + " " + PID_MULT);
+                opMode.telemetry.addData("error", pidControl.getError());
+                opMode.telemetry.addData("integral", pidControl.getIntegral());
+                opMode.telemetry.addData("derivative", pidControl.getDerivative());
+                opMode.telemetry.addData("turn", turnVal);
+                opMode.telemetry.update();
+                drive(-turnVal, turnVal);
+            }
         }
 
         stopAndResetEncoders();
