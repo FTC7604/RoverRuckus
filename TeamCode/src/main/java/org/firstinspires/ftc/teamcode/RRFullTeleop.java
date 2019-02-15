@@ -63,7 +63,7 @@ public class RRFullTeleop extends LinearOpMode {
     private boolean hookIsOpen = true;
 
     //intake lift toggle controls
-    private boolean intakeTargetIsUp = true;
+    private boolean intakeTargetIsUp = false;
     private boolean intakeCurrState = false;
     private boolean intakePrevState = false;
 
@@ -71,6 +71,7 @@ public class RRFullTeleop extends LinearOpMode {
 
     private PropertiesLoader loader = new PropertiesLoader("RRFullTeleop");
     private final double SLOW_MULTIPLIER = loader.getDoubleProperty("slowMultiplier");
+    private final double SLOW_SERVO_SPEED = loader.getDoubleProperty("slowServoSpeed");
 
     @Override
     public void runOpMode() {
@@ -129,19 +130,53 @@ public class RRFullTeleop extends LinearOpMode {
         }
     }
 
+    private void togglePositionSlowly(Servo servo, double disengagedPosition, double engagedPosition, boolean button){
+        //default state, when the button isn't pressed it remains its engaged.
+        double targetPosition = button ? engagedPosition : disengagedPosition;
+        double currentPosition = servo.getPosition();
+
+        if (currentPosition < targetPosition)
+        {
+            if (currentPosition + SLOW_SERVO_SPEED >= targetPosition)
+            {
+                servo.setPosition(targetPosition);
+            }
+            else
+            {
+                servo.setPosition(currentPosition + SLOW_SERVO_SPEED);
+            }
+        }
+        else
+        {
+            if (currentPosition - SLOW_SERVO_SPEED <= targetPosition)
+            {
+                servo.setPosition(targetPosition);
+            }
+            else
+            {
+                servo.setPosition(currentPosition - SLOW_SERVO_SPEED);
+            }
+        }
+    }
+
+    private boolean anyDPad()
+    {
+        return gamepad2.dpad_up || gamepad2.dpad_down || gamepad2.dpad_left || gamepad2.dpad_right;
+    }
+
     private void RunIntakeLift () {
         double intakeliftUp = 1;//power level for going up
         double intakeliftDown = -0.4;//for going down
 
         int intakeUpperLimit = 0;//for the robot intake all the way in this is how the game starts
-        int intakeLowerLimit = -1500;       //if the lift is the above where is should be
+        int intakeLowerLimit = -1800;       //if the lift is the above where is should be
 //for the robot intake all the way extended, when picking up particles.
 
 
         //intake toggle controls to change where we want to go
-        intakeCurrState = gamepad2.x;
+        intakeCurrState = gamepad2.right_trigger > 0.5;
 
-        if ((gamepad2.x) && (intakeCurrState != intakePrevState)){
+        if ((gamepad2.right_trigger > 0.5) && (intakeCurrState != intakePrevState)){
             intakeTargetIsUp = !intakeTargetIsUp;
         }
         intakePrevState = intakeCurrState;
@@ -158,7 +193,7 @@ public class RRFullTeleop extends LinearOpMode {
     }
 
     private void RunLift () {
-        int liftUpperLimit = (3889);//I just did the math for the values because android studio got mad
+        int liftUpperLimit = (3689);//I just did the math for the values because android studio got mad
         int liftLowerLimit = (0 + 75);//the lift is all the way down, the plus is to compensate for lag.
 
         //Lifter controls, Negative is up, positive is down Hang is the other way around
@@ -189,6 +224,16 @@ public class RRFullTeleop extends LinearOpMode {
                 crunchy.liftLeft.setPower(0);
                 crunchy.liftRight.setPower(0);
             }
+        }
+        else if (crunchy.liftLeft.getCurrentPosition() < liftLowerLimit + 300 && gamepad2.left_stick_y < 0)
+        {
+            crunchy.liftLeft.setPower(gamepad2.left_stick_y / 2);
+            crunchy.liftRight.setPower(gamepad2.left_stick_y / 2);
+        }
+        else if (crunchy.liftLeft.getCurrentPosition() > liftUpperLimit - 300  && gamepad2.left_stick_y > 0)
+        {
+            crunchy.liftLeft.setPower(gamepad2.left_stick_y / 2);
+            crunchy.liftRight.setPower(gamepad2.left_stick_y / 2);
         }
         else{
             crunchy.liftLeft.setPower(gamepad2.left_stick_y);
@@ -233,25 +278,27 @@ public class RRFullTeleop extends LinearOpMode {
 
     private void RunScoringBucket () {
         //ScoringBucket
-        double loDown = 0;
-        double loUp = 0.75;
+        double loDown = crunchy.LEFT_OUTPUT_DOWN;
+        double loUp = crunchy.LEFT_OUTPUT_UP;
         double roDown = 1- loDown;
         double roUp = 1-loUp;
 
         double liftHalfway = 3100;
 
+        boolean bucketControl = gamepad2.left_trigger > 0.5;
         //controls of the bucket with gamapad1.a and makes sure that the user can't break the bot. It holds at a diagonal position when it can so that it keeps the particles
-        if ((gamepad2.a == false) && crunchy.liftLeft.getCurrentPosition() > liftHalfway){
+        if ((bucketControl == false) && crunchy.liftLeft.getCurrentPosition() > liftHalfway){
             crunchy.leftOutput.setPosition(0.35);
             crunchy.rightOutput.setPosition(0.65);
         }
         else if (crunchy.liftLeft.getCurrentPosition() < liftHalfway){
-            togglePosition(crunchy.leftOutput, loDown, (loDown+0.1), gamepad2.a);//lets the user move the bucket around but only a little bit
-            togglePosition(crunchy.rightOutput, roDown, (roDown-0.1), gamepad2.a);
+            togglePosition(crunchy.leftOutput, loDown, (loDown+0.1), bucketControl);//lets the user move the bucket around but only a little bit
+            togglePosition(crunchy.rightOutput, roDown, (roDown-0.1), bucketControl);
         }
         else{
-            togglePosition(crunchy.leftOutput, loDown, loUp, gamepad2.a);//full range of motion for scoring when the bucket is in the air
-            togglePosition(crunchy.rightOutput, roDown, roUp, gamepad2.a);
+
+            togglePositionSlowly(crunchy.leftOutput, loDown, loUp, bucketControl);//full range of motion for scoring when the bucket is in the air
+            togglePositionSlowly(crunchy.rightOutput, roDown, roUp, bucketControl);
         }
     }
 

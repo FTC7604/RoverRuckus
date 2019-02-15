@@ -1,33 +1,40 @@
 package org.firstinspires.ftc.teamcode.util;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.DcMotor;
 
 import java.util.concurrent.CancellationException;
 
 public abstract class DWAILinearOpMode extends LinearOpMode
 {
     private String lastStep = null;
-    private boolean stepMode;
+    private long stepMode;
 
     protected DWAILinearOpMode()
     {
-        this(false);
+        this(0);
     }
 
-    protected DWAILinearOpMode(boolean stepMode)
+    protected DWAILinearOpMode(long stepMode)
     {
         this.stepMode = stepMode;
     }
 
-    protected void enableSteps()
+    protected void setStepMode(long stepMode)
     {
-        stepMode = true;
+        this.stepMode = stepMode;
     }
 
     protected void step(String name)
     {
-        if (!stepMode)
+        if (stepMode == 0)
         {
+            return;
+        }
+
+        if (stepMode > 0)
+        {
+            sleep(stepMode);
             return;
         }
 
@@ -73,6 +80,25 @@ public abstract class DWAILinearOpMode extends LinearOpMode
             }
             throw e;
         }
+    }
+
+    public final void launchThread(final Runnable r)
+    {
+        new Thread()
+        {
+            @Override
+            public void run()
+            {
+                try
+                {
+                    r.run();
+                }
+                catch (Exception e)
+                {
+                    // TODO: handle exception
+                }
+            }
+        }.start();
     }
 
     public abstract void initOpMode() throws InterruptedException;

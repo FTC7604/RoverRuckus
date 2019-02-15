@@ -39,10 +39,13 @@ public class Crunchy
     public Servo sampleArm = null;
     public Servo leftOutput = null;
     public Servo rightOutput = null;
+    public Servo marker = null;
 
     public BNO055IMU imu1, imu2;
 
     private PropertiesLoader loader = new PropertiesLoader("Crunchy");
+    protected final double VELOCITY_MODE = loader.getDoubleProperty("velocityMode");
+
     public final double HOOK_OPEN = loader.getDoubleProperty("hookOpen");
     public final double HOOK_ENGAGED = loader.getDoubleProperty("hookEngaged");
     public final double LEFT_OUTPUT_DOWN = loader.getDoubleProperty("loDown");
@@ -51,11 +54,20 @@ public class Crunchy
     public final double RIGHT_OUTPUT_UP = 1 - LEFT_OUTPUT_UP;
     public final double OPEN_PHONE = loader.getDoubleProperty("openPhone");
     public final double CLOSED_PHONE = loader.getDoubleProperty("closedPhone");
+    public final double SAMPLE_ARM_UP = loader.getDoubleProperty("sampleArmUp");
+    public final double SAMPLE_ARM_DOWN = loader.getDoubleProperty("sampleArmDown");
+    public final double MARKER_OPEN = loader.getDoubleProperty("markerOpen");
+    public final double MARKER_CLOSED = loader.getDoubleProperty("markerClosed");
 
+
+    protected final boolean PID_ENABLED = loader.getBooleanProperty("pidEnabled");
+    protected final double PID_PRECISION_THRESHOLD_MULT = loader.getDoubleProperty("pidPrecisionThresholdMult");
     protected final double kP = loader.getDoubleProperty("pidProportional");
     protected final double kI = loader.getDoubleProperty("pidIntegral");
     protected final double kD = loader.getDoubleProperty("pidDifferential");
-    protected final double pidMult = loader.getDoubleProperty("pidMultiplier");
+    protected final double PID_MULT = loader.getDoubleProperty("pidMultiplier");
+    protected final double PID_MIN_POWER = loader.getDoubleProperty("pidMinPower");
+    protected final double PID_MAX_DIFFERENTIAL = loader.getDoubleProperty("pidMaxDifferential");
 
     public Crunchy(OpMode opMode)
     {
@@ -84,6 +96,7 @@ public class Crunchy
         sampleArm = hardwareMap.get(Servo.class, "sa");
         leftOutput = hardwareMap.get(Servo.class, "lo");
         rightOutput = hardwareMap.get(Servo.class, "ro");
+        marker = hardwareMap.get(Servo.class, "mk");
 
         //sets the direction for the lift
         liftLeft.setDirection(DcMotor.Direction.FORWARD);
@@ -93,15 +106,6 @@ public class Crunchy
         intake.setDirection(DcMotor.Direction.FORWARD);
         intakeLift.setDirection(DcMotor.Direction.FORWARD);
 
-        //resets all the encoders
-        intakeLift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        liftLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        liftRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-
-        //starts all the encoders
-        intakeLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        liftLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        liftRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         //makes it stopAndResetEncoders when the motor is at rest
         intakeLift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -151,10 +155,21 @@ public class Crunchy
 
     public void drive(double fl, double fr, double bl, double br)
     {
-        frontLeft.setPower(fl);
-        frontRight.setPower(fr);
-        backLeft.setPower(bl);
-        backRight.setPower(br);
+        if(VELOCITY_MODE <= 0)
+        {
+            frontLeft.setPower(fl);
+            frontRight.setPower(fr);
+            backLeft.setPower(bl);
+            backRight.setPower(br);
+        }
+        else
+        {
+            frontLeft.setVelocity(fl * VELOCITY_MODE);
+            frontRight.setVelocity(fr * VELOCITY_MODE);
+            backLeft.setVelocity(bl * VELOCITY_MODE);
+            backRight.setVelocity(br * VELOCITY_MODE);
+        }
+
     }
 
     public void drive(double left, double right)

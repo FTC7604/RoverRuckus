@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 import static java.lang.Math.*;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -28,7 +29,7 @@ import java.io.File;
 import java.util.Locale;
 
 @TeleOp(name = "Double Mecanum", group = "Linear Opmode")
-//@Disabled
+@Disabled
 public class DoubleGyroMecanumDrive extends LinearOpMode{
     //class Variables
     final private double pi = 3.14159;

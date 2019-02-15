@@ -30,6 +30,7 @@
 //Ignore this
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -42,7 +43,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.util.IMUControl;
 
 @TeleOp(name="Mechanum 5.0", group="Linear Opmode")
-//@Disabled
+@Disabled
 public class IMUmecDrive extends LinearOpMode {
 
     private org.firstinspires.ftc.teamcode.util.IMUControl IMUControl = new IMUControl();
