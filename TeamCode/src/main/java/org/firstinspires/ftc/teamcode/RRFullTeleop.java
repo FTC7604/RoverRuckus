@@ -39,6 +39,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.TouchSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.teamcode.util.Crunchy;
 import org.firstinspires.ftc.teamcode.util.PropertiesLoader;
 import org.firstinspires.ftc.teamcode.util.vision.VisionTarget;
@@ -72,6 +73,7 @@ public class RRFullTeleop extends LinearOpMode {
     private PropertiesLoader loader = new PropertiesLoader("RRFullTeleop");
     private final double SLOW_MULTIPLIER = loader.getDoubleProperty("slowMultiplier");
     private final double SLOW_SERVO_SPEED = loader.getDoubleProperty("slowServoSpeed");
+    private final boolean SHOW_COLOR_FORMAT_DATA = loader.getBooleanProperty("showColorFormatData");
 
     @Override
     public void runOpMode() {
@@ -89,10 +91,10 @@ public class RRFullTeleop extends LinearOpMode {
 
             crunchy.intake.setPower(gamepad2.right_stick_y);
 //            runIntake();
-            
-            RunIntakeLift();
 
             RunLift();
+
+            RunIntakeLift();
 
             RunDrive();
 
@@ -104,6 +106,22 @@ public class RRFullTeleop extends LinearOpMode {
 
             telemetry.addData("intake lift", crunchy.intakeLift.getCurrentPosition());
             telemetry.addData("Encoder Position", crunchy.liftLeft.getCurrentPosition());
+
+            if (crunchy.colorLeft != null && SHOW_COLOR_FORMAT_DATA)
+            {
+                final String colorFormat = "color=[%d,%d,%d], distance=%f mm";
+                telemetry.addData("Color L", String.format(Locale.US, colorFormat,
+                        crunchy.colorLeft.red(),
+                        crunchy.colorLeft.green(),
+                        crunchy.colorLeft.blue(),
+                        crunchy.distanceLeft.getDistance(DistanceUnit.MM)));
+                telemetry.addData("Color R", String.format(Locale.US, colorFormat,
+                        crunchy.colorRight.red(),
+                        crunchy.colorRight.green(),
+                        crunchy.colorRight.blue(),
+                        crunchy.distanceRight.getDistance(DistanceUnit.MM)));
+
+            }
             telemetry.update();
         }
     }
@@ -174,16 +192,31 @@ public class RRFullTeleop extends LinearOpMode {
 
 
         //intake toggle controls to change where we want to go
-        intakeCurrState = gamepad2.right_trigger > 0.5;
+        intakeCurrState = gamepad2.x;
 
-        if ((gamepad2.right_trigger > 0.5) && (intakeCurrState != intakePrevState)){
+        if ((gamepad2.x) && (intakeCurrState != intakePrevState))
+        {
             intakeTargetIsUp = !intakeTargetIsUp;
+
+//            if(intakeTargetIsUp && crunchy.liftLeft.getCurrentPosition() > crunchy.LIFT_LOWER_LIMIT && hookIsOpen)
+//            {
+//                intakeTargetIsUp = false;
+//            }
         }
         intakePrevState = intakeCurrState;
 
         if ((intakeTargetIsUp) && (crunchy.intakeLift.getCurrentPosition() < intakeUpperLimit))
         {
-            crunchy.intakeLift.setPower(intakeliftUp);
+            if(crunchy.liftLeft.getCurrentPosition() > crunchy.LIFT_LOWER_LIMIT && hookIsOpen)
+            {
+                crunchy.liftLeft.setPower(-0.5);
+                crunchy.liftRight.setPower(-0.5);
+            }
+            else
+            {
+                crunchy.intakeLift.setPower(intakeliftUp);
+                crunchy.intake.setPower(-1);
+            }
         }
         else if ((!intakeTargetIsUp) && (crunchy.intakeLift.getCurrentPosition() > intakeLowerLimit))
         {
@@ -193,8 +226,8 @@ public class RRFullTeleop extends LinearOpMode {
     }
 
     private void RunLift () {
-        int liftUpperLimit = (3689);//I just did the math for the values because android studio got mad
-        int liftLowerLimit = (0 + 75);//the lift is all the way down, the plus is to compensate for lag.
+        int liftUpperLimit = crunchy.LIFT_UPPER_LIMIT;//I just did the math for the values because android studio got mad
+        int liftLowerLimit = crunchy.LIFT_LOWER_LIMIT;//the lift is all the way down, the plus is to compensate for lag.
 
         //Lifter controls, Negative is up, positive is down Hang is the other way around
 
@@ -285,7 +318,7 @@ public class RRFullTeleop extends LinearOpMode {
 
         double liftHalfway = 3100;
 
-        boolean bucketControl = gamepad2.left_trigger > 0.5;
+        boolean bucketControl = gamepad2.a;
         //controls of the bucket with gamapad1.a and makes sure that the user can't break the bot. It holds at a diagonal position when it can so that it keeps the particles
         if ((bucketControl == false) && crunchy.liftLeft.getCurrentPosition() > liftHalfway){
             crunchy.leftOutput.setPosition(0.35);
@@ -331,7 +364,7 @@ public class RRFullTeleop extends LinearOpMode {
         crunchy.liftLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         crunchy.liftRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        //makes it stopAndResetEncoders when the motor is at rest
+        //makes it stop when the motor is at rest
         //intake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         crunchy.intakeLift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         crunchy.liftLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);

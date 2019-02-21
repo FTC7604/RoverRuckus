@@ -1,9 +1,12 @@
 package org.firstinspires.ftc.teamcode.util;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ReadWriteFile;
@@ -43,6 +46,9 @@ public class Crunchy
 
     public BNO055IMU imu1, imu2;
 
+    public ColorSensor colorLeft, colorRight;
+    public DistanceSensor distanceLeft, distanceRight;
+
     private PropertiesLoader loader = new PropertiesLoader("Crunchy");
     protected final double VELOCITY_MODE = loader.getDoubleProperty("velocityMode");
 
@@ -52,6 +58,8 @@ public class Crunchy
     public final double LEFT_OUTPUT_UP = loader.getDoubleProperty("loUp");
     public final double RIGHT_OUTPUT_DOWN = 1 - LEFT_OUTPUT_DOWN;
     public final double RIGHT_OUTPUT_UP = 1 - LEFT_OUTPUT_UP;
+    public final int LIFT_UPPER_LIMIT = loader.getIntegerProperty("liftUpperLimit");
+    public final int LIFT_LOWER_LIMIT = loader.getIntegerProperty("liftLowerLimit");
     public final double OPEN_PHONE = loader.getDoubleProperty("openPhone");
     public final double CLOSED_PHONE = loader.getDoubleProperty("closedPhone");
     public final double SAMPLE_ARM_UP = loader.getDoubleProperty("sampleArmUp");
@@ -126,6 +134,12 @@ public class Crunchy
 
         imu1 = hardwareMap.get(BNO055IMU.class, "imu");
         imu2 = hardwareMap.get(BNO055IMU.class, "imu 1");
+
+        colorLeft = hardwareMap.get(ColorSensor.class, "cdl");
+        colorRight = hardwareMap.get(ColorSensor.class, "cdr");
+        distanceLeft = hardwareMap.get(DistanceSensor.class, "cdl");
+        distanceRight = hardwareMap.get(DistanceSensor.class, "cdr");
+
     }
 
     private void initIMU()
