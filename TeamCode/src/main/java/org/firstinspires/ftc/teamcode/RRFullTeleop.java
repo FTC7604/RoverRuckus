@@ -31,6 +31,7 @@
 package org.firstinspires.ftc.teamcode;
 
 
+import com.qualcomm.hardware.rev.RevBlinkinLedDriver;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -39,6 +40,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.TouchSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.teamcode.util.Crunchy;
 import org.firstinspires.ftc.teamcode.util.PropertiesLoader;
@@ -75,6 +77,11 @@ public class RRFullTeleop extends LinearOpMode {
     private final double SLOW_SERVO_SPEED = loader.getDoubleProperty("slowServoSpeed");
     private final boolean SHOW_COLOR_FORMAT_DATA = loader.getBooleanProperty("showColorFormatData");
 
+    //stuff that I need to put in crunchy but am too excited to set up the leds
+    RevBlinkinLedDriver blinkinLedDriver;
+    RevBlinkinLedDriver.BlinkinPattern pattern;
+    Telemetry.Item patternName;
+
     @Override
     public void runOpMode() {
         crunchy = new Crunchy(this);
@@ -84,8 +91,19 @@ public class RRFullTeleop extends LinearOpMode {
 
         setMotorBehaviors();
 
+        //also need to be put in cruchy but the time in now
+        blinkinLedDriver = hardwareMap.get(RevBlinkinLedDriver.class, "b");
+        pattern = RevBlinkinLedDriver.BlinkinPattern.RAINBOW_RAINBOW_PALETTE;
+        blinkinLedDriver.setPattern(pattern);
+        patternName = telemetry.addData("Pattern: ", pattern.toString());
+
+
         waitForStart();
         runtime.reset();
+
+
+
+
 
         while (opModeIsActive()) {
 
@@ -122,10 +140,38 @@ public class RRFullTeleop extends LinearOpMode {
                         crunchy.distanceRight.getDistance(DistanceUnit.MM)));
 
             }
+            /*
+            default depending on the alliance selection:
+
+            if(redAlliance){
+                pattern = RAINBOW_LAVA_PALETTE;
+                if(time/1000 < 30) pattern = HEARTBEAT_RED;
+            }
+
+            if(blueAlliance){
+                pattern = RAINBOW_OCEAN_PALETTE;
+                if(time/1000 < 30) pattern = HEARTBEAT_BLUE;
+            }
+
+            Both(Different): CP1_2_COLOR_GRADIENT
+            One(cube): STROBE_GOLD
+            One(ball): STROBE_WHITE
+
+
+
+
+            }
+            RAINBOW_OCEAN_PALETTE,
+            */
             telemetry.update();
         }
     }
-    
+    //also probably needs to go into crunchy
+    protected void displayPattern() {
+        blinkinLedDriver.setPattern(pattern);
+        patternName.setValue(pattern.toString());
+    }
+
     private void runIntake(){
         int intakePosition = crunchy.intake.getCurrentPosition() % (1440 / 2);
         if(abs(gamepad2.right_stick_y) > 2) {
