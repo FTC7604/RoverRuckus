@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.util;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
+import com.qualcomm.hardware.rev.RevBlinkinLedDriver;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.ColorSensor;
@@ -48,6 +49,8 @@ public class Crunchy
 
     public ColorSensor colorLeft, colorRight;
     public DistanceSensor distanceLeft, distanceRight;
+
+    public RevBlinkinLedDriver blinkinLedDriver;
 
     private PropertiesLoader loader = new PropertiesLoader("Crunchy");
     protected final double VELOCITY_MODE = loader.getDoubleProperty("velocityMode");
@@ -140,6 +143,8 @@ public class Crunchy
         distanceLeft = hardwareMap.get(DistanceSensor.class, "cdl");
         distanceRight = hardwareMap.get(DistanceSensor.class, "cdr");
 
+        //also need to be put in cruchy but the time in now
+        blinkinLedDriver = hardwareMap.get(RevBlinkinLedDriver.class, "b");
     }
 
     private void initIMU()

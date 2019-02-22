@@ -76,8 +76,6 @@ public class ColorSensorCalibration extends DWAILinearOpMode
         double silverDistanceLeft = crunchy.distanceLeft.getDistance(DistanceUnit.MM);
         double silverDistanceRight = crunchy.distanceRight.getDistance(DistanceUnit.MM);
 
-        waitForAPressed();
-
         double mineralDistanceLeft = Math.max(goldDistanceLeft, silverDistanceLeft);
         double mineralDistanceRight = Math.max(goldDistanceRight, silverDistanceRight);
         double distanceThresholdLeft = (mineralDistanceLeft + emptyDistanceLeft) / 2;
@@ -85,6 +83,8 @@ public class ColorSensorCalibration extends DWAILinearOpMode
 
         double colorThresholdLeft = (goldColorLeft + silverColorLeft) / 2;
         double colorThresholdRight = (goldColorRight + silverColorRight) / 2;
+
+        distanceThresholdLeft = distanceThresholdRight = 100;
 
         File sdcard = Environment.getExternalStorageDirectory();
         File config = new File(sdcard, "DWAIConfig/ColorSensorCalibration.properties");

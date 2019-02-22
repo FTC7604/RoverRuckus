@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.hardware.rev.RevBlinkinLedDriver;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -103,6 +104,8 @@ public class Autonomous extends DWAILinearOpMode
 
         //Setting up all processes
         crunchy = new CrunchyAutonomous(this);
+
+        crunchy.blinkinLedDriver.setPattern(RevBlinkinLedDriver.BlinkinPattern.SHOT_RED);
 
         //resets all the encoders
         crunchy.intakeLift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
