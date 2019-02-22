@@ -49,6 +49,16 @@ import org.firstinspires.ftc.teamcode.util.vision.VisionTracking;
 
 import java.util.Locale;
 
+import static com.qualcomm.hardware.rev.RevBlinkinLedDriver.BlinkinPattern.COLOR_WAVES_LAVA_PALETTE;
+import static com.qualcomm.hardware.rev.RevBlinkinLedDriver.BlinkinPattern.CP1_2_COLOR_GRADIENT;
+import static com.qualcomm.hardware.rev.RevBlinkinLedDriver.BlinkinPattern.GOLD;
+import static com.qualcomm.hardware.rev.RevBlinkinLedDriver.BlinkinPattern.HEARTBEAT_BLUE;
+import static com.qualcomm.hardware.rev.RevBlinkinLedDriver.BlinkinPattern.HEARTBEAT_RED;
+import static com.qualcomm.hardware.rev.RevBlinkinLedDriver.BlinkinPattern.RAINBOW_OCEAN_PALETTE;
+import static com.qualcomm.hardware.rev.RevBlinkinLedDriver.BlinkinPattern.STROBE_GOLD;
+import static com.qualcomm.hardware.rev.RevBlinkinLedDriver.BlinkinPattern.STROBE_RED;
+import static com.qualcomm.hardware.rev.RevBlinkinLedDriver.BlinkinPattern.STROBE_WHITE;
+import static com.qualcomm.hardware.rev.RevBlinkinLedDriver.BlinkinPattern.WHITE;
 import static java.lang.Math.abs;
 import static java.lang.Math.ceil;
 import static java.lang.Math.signum;
@@ -82,6 +92,16 @@ public class RRFullTeleop extends LinearOpMode {
     RevBlinkinLedDriver.BlinkinPattern pattern;
     Telemetry.Item patternName;
 
+    Particle left;
+    Particle right;
+
+    //little enum for the color sensors.
+    private enum Particle {
+        None,
+        Yellow,
+        White,
+    }
+
     @Override
     public void runOpMode() {
         crunchy = new Crunchy(this);
@@ -100,9 +120,6 @@ public class RRFullTeleop extends LinearOpMode {
 
         waitForStart();
         runtime.reset();
-
-
-
 
 
         while (opModeIsActive()) {
@@ -125,8 +142,7 @@ public class RRFullTeleop extends LinearOpMode {
             telemetry.addData("intake lift", crunchy.intakeLift.getCurrentPosition());
             telemetry.addData("Encoder Position", crunchy.liftLeft.getCurrentPosition());
 
-            if (crunchy.colorLeft != null && SHOW_COLOR_FORMAT_DATA)
-            {
+            if (crunchy.colorLeft != null && SHOW_COLOR_FORMAT_DATA) {
                 final String colorFormat = "color=[%d,%d,%d], distance=%f mm";
                 telemetry.addData("Color L", String.format(Locale.US, colorFormat,
                         crunchy.colorLeft.red(),
@@ -140,37 +156,118 @@ public class RRFullTeleop extends LinearOpMode {
                         crunchy.distanceRight.getDistance(DistanceUnit.MM)));
 
             }
-            /*
-            default depending on the alliance selection:
 
-            if(redAlliance){
-                pattern = RAINBOW_LAVA_PALETTE;
-                if(time/1000 < 30) pattern = HEARTBEAT_RED;
+
+            if (isYellow(crunchy.colorLeft.red(), crunchy.colorLeft.green(), crunchy.colorLeft.blue()))
+                left = Particle.Yellow;
+            else if (isWhite(crunchy.colorLeft.red(), crunchy.colorLeft.green(), crunchy.colorLeft.blue()))
+                left = Particle.White;
+            else left = Particle.None;
+
+            if (isYellow(crunchy.colorRight.red(), crunchy.colorRight.green(), crunchy.colorRight.blue()))
+                right = Particle.Yellow;
+            else if (isWhite(crunchy.colorRight.red(), crunchy.colorRight.green(), crunchy.colorRight.blue()))
+                right = Particle.White;
+            else right = Particle.None;
+
+//            This should read like a CSS document, with the pattern being modified if the situation calls for it
+//            Essentially, the least important stuff is at the l=top and the most important stuff is at the bottom.
+
+            boolean redAlliance = true;
+            boolean blueAlliance = false;
+
+            //stuff for the Red alliance which changes as time decreases
+            if (redAlliance) {
+                pattern = COLOR_WAVES_LAVA_PALETTE;
+                if (time / 1000 < 30) pattern = HEARTBEAT_RED;
+                if (time / 1000 < 10) pattern = STROBE_RED;
             }
 
-            if(blueAlliance){
+            //stuff for the blue alliance which changes as time decreases
+            if (blueAlliance) {
                 pattern = RAINBOW_OCEAN_PALETTE;
-                if(time/1000 < 30) pattern = HEARTBEAT_BLUE;
+                if (time / 1000 < 30) pattern = HEARTBEAT_BLUE;
+                if (time / 1000 < 10) pattern = STROBE_RED;
             }
 
-            Both(Different): CP1_2_COLOR_GRADIENT
-            One(cube): STROBE_GOLD
-            One(ball): STROBE_WHITE
-
-
-
-
+            //code for the particles that should only take affect when the intake is down
+            if (crunchy.intake.getCurrentPosition() > 3000) {
+                //if one of the particles is yellow then strobe yellow.
+                if ((left == Particle.Yellow && right == Particle.None) || (left == Particle.None && right == Particle.Yellow)) {
+                    pattern = STROBE_GOLD;
+                }
+                //if one of the particles is white then strobe white
+                else if ((left == Particle.White && right == Particle.None) || (left == Particle.None && right == Particle.White)) {
+                    pattern = STROBE_WHITE;
+                }
+                //if particles are different then flash a gradient of the two colors
+                else if ((left == Particle.Yellow && right == Particle.White) || (left == Particle.White && right == Particle.Yellow)) {
+                    pattern = CP1_2_COLOR_GRADIENT;
+                }
+                //if the are both yellow, then remain yellow
+                else if (left == Particle.Yellow && right == Particle.Yellow) {
+                    pattern = GOLD;
+                }
+                //if they are both white then remain white
+                else if (left == Particle.White && right == Particle.White) {
+                    pattern = WHITE;
+                }
             }
-            RAINBOW_OCEAN_PALETTE,
-            */
-            telemetry.update();
+
+            displayPattern();
+
         }
     }
+
     //also probably needs to go into crunchy
-    protected void displayPattern() {
+    private void displayPattern() {
         blinkinLedDriver.setPattern(pattern);
         patternName.setValue(pattern.toString());
     }
+
+    //three little methods for processing the imput of the color sensor
+    //they also can go into crunchy, along w the enum to make things easier
+    private boolean isYellow(int r, int g, int b) {
+        //rgb(252, 200, 30) is a similar color to the yellow cube
+        //given that its on a black background it doesn't seem like its too big of a deal
+
+        boolean isYellow = true;
+
+        if(!colorCheck(r,252,50))isYellow = false;
+        else if(!colorCheck(g,200,50))isYellow = false;
+        else if(!colorCheck(b,30,50))isYellow = false;
+
+        return isYellow;
+    }
+    private boolean isWhite(int r, int g, int b) {
+        //rgb(249, 242, 217) is a similar color to the white ball
+        //given that its on a black background it doesn't seem like its too big of a deal
+
+        boolean isWhite = true;
+
+        if(!colorCheck(r,249,50))isWhite = false;
+        else if(!colorCheck(g,242,50))isWhite = false;
+        else if(!colorCheck(b,217,50))isWhite = false;
+
+        return isWhite;
+    }
+    private boolean colorCheck(int maybe, int color, int range) {
+        int upper = 0;
+        int lower = 0;
+
+        //puts a ceiling on the highest possible value that the upper limit acn be
+        if (color + range > 255) upper = 255;
+        else upper = color + range;
+
+        //puts a floor on the lowest possible value that the lower limit can be
+        if (color - range > 0) lower = 0;
+        else lower = color - range;
+
+        //checks to see if its in between the 2, returns true if it is.
+        if (maybe >= lower && maybe <= upper) return true;
+        else return false;
+    }
+
 
     private void runIntake(){
         int intakePosition = crunchy.intake.getCurrentPosition() % (1440 / 2);
