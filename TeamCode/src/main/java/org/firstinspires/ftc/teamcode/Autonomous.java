@@ -90,10 +90,12 @@ public class Autonomous extends DWAILinearOpMode
 
     private VisionTracking tracking;
     private boolean isCraterPosition;
+    private boolean isRed;
 
-    public Autonomous(boolean isCraterPosition)
+    public Autonomous(boolean isCraterPosition, boolean isRed)
     {
         this.isCraterPosition = isCraterPosition;
+        this.isRed = isRed;
     }
 
     @Override
@@ -105,7 +107,8 @@ public class Autonomous extends DWAILinearOpMode
         //Setting up all processes
         crunchy = new CrunchyAutonomous(this);
 
-        crunchy.blinkinLedDriver.setPattern(RevBlinkinLedDriver.BlinkinPattern.SHOT_RED);
+        if(isRed) crunchy.blinkinLedDriver.setPattern(RevBlinkinLedDriver.BlinkinPattern.SHOT_RED);
+        else crunchy.blinkinLedDriver.setPattern(RevBlinkinLedDriver.BlinkinPattern.SHOT_BLUE);
 
         //resets all the encoders
         crunchy.intakeLift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);

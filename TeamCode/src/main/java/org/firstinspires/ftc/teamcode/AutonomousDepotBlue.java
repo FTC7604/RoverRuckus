@@ -1,10 +1,10 @@
 package org.firstinspires.ftc.teamcode;
 
 @com.qualcomm.robotcore.eventloop.opmode.Autonomous(name="Autonomous - Depot Position")
-public class AutonomousDepot extends Autonomous
+public class AutonomousDepotBlue extends Autonomous
 {
-    public AutonomousDepot()
+    public AutonomousDepotBlue()
     {
-        super(false);
+        super(false,false);
     }
 }
