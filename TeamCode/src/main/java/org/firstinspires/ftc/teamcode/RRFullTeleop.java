@@ -393,7 +393,7 @@ public class RRFullTeleop extends LinearOpMode {
             else
             {
                 crunchy.intakeLift.setPower(intakeliftUp);
-                crunchy.intake.setPower(-0.5);
+//                crunchy.intake.setPower(-0.5);
             }
         }
         else if ((!intakeTargetIsUp) && (crunchy.intakeLift.getCurrentPosition() > intakeLowerLimit))
@@ -409,8 +409,7 @@ public class RRFullTeleop extends LinearOpMode {
 
         //Lifter controls, Negative is up, positive is down Hang is the other way around
 
-        //if the lift is below where it is supposed to be
-        if (gamepad2.left_stick_y < 0) {
+        if (gamepad2.left_stick_y > 0) {
             if (crunchy.liftLeft.getCurrentPosition() > liftUpperLimit) {
                 crunchy.liftLeft.setPower(0);
                 crunchy.liftRight.setPower(0);
@@ -424,7 +423,7 @@ public class RRFullTeleop extends LinearOpMode {
                 crunchy.liftLeft.setPower(gamepad2.left_stick_y);
                 crunchy.liftRight.setPower(gamepad2.left_stick_y);
             }
-        } else if (gamepad2.left_stick_y > 0) {
+        } else if (gamepad2.left_stick_y < 0) {
             if (crunchy.liftLeft.getCurrentPosition() < liftLowerLimit) {
                 crunchy.liftLeft.setPower(0);
                 crunchy.liftRight.setPower(0);
@@ -444,6 +443,12 @@ public class RRFullTeleop extends LinearOpMode {
             crunchy.liftRight.setPower(0);
         }
     }
+
+//    if()
+//    if (ypu want to go towards the bottom and its close ) {slpow it down}
+//    else if (your are near the top and you want togo up){slow it down}
+//    else if youare at the top/above), only ;let it go down
+//            else if you are at the bottom/below {you can only go up
 
     private void RunDrive () {
         double y = (((-gamepad1.left_stick_y)*(abs(-gamepad1.left_stick_y))+((-gamepad1.right_stick_y)*(abs(-gamepad1.right_stick_y))))/2);
