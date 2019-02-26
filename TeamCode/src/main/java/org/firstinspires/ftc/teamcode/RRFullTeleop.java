@@ -99,9 +99,8 @@ public class RRFullTeleop extends LinearOpMode {
         WHITE,
     }
 
-    //this should go in crunchy
     private boolean intakeIsFull(){
-        if(!(left != Particle.NONE || right != Particle.NONE)){
+        if(left != Particle.NONE && right != Particle.NONE){
             return true;
         }
         else return false;
@@ -191,7 +190,7 @@ public class RRFullTeleop extends LinearOpMode {
                 //            This should read like a CSS document, with the pattern being modified if the situation calls for it
                 //            Essentially, the least important stuff is at the l=top and the most important stuff is at the bottom.
 
-                boolean redAlliance = true;
+                boolean redAlliance = Autonomous.isRed;
 
                 //stuff for the Red alliance which changes as time decreases
                 if (redAlliance)
@@ -394,7 +393,7 @@ public class RRFullTeleop extends LinearOpMode {
             else
             {
                 crunchy.intakeLift.setPower(intakeliftUp);
-                crunchy.intake.setPower(-1);
+                crunchy.intake.setPower(-0.5);
             }
         }
         else if ((!intakeTargetIsUp) && (crunchy.intakeLift.getCurrentPosition() > intakeLowerLimit))
@@ -411,51 +410,38 @@ public class RRFullTeleop extends LinearOpMode {
         //Lifter controls, Negative is up, positive is down Hang is the other way around
 
         //if the lift is below where it is supposed to be
-        if (crunchy.liftLeft.getCurrentPosition() < liftLowerLimit) {
-            //you can go up
-            if (gamepad2.left_stick_y > 0) {
-                crunchy.liftLeft.setPower(gamepad2.left_stick_y * .1);
-                crunchy.liftRight.setPower(gamepad2.left_stick_y * .1);
-            }
-            //but not down
-            else {
+        if (gamepad2.left_stick_y < 0) {
+            if (crunchy.liftLeft.getCurrentPosition() > liftUpperLimit) {
                 crunchy.liftLeft.setPower(0);
                 crunchy.liftRight.setPower(0);
+            } else if (crunchy.liftLeft.getCurrentPosition() > liftUpperLimit - 200) {
+                crunchy.liftLeft.setPower(gamepad2.left_stick_y * .2);
+                crunchy.liftRight.setPower(gamepad2.left_stick_y * .2);
+            } else if (crunchy.liftLeft.getCurrentPosition() > liftUpperLimit - 500) {
+                crunchy.liftLeft.setPower(gamepad2.left_stick_y * (liftUpperLimit - crunchy.liftLeft.getCurrentPosition()) / 500);
+                crunchy.liftRight.setPower(gamepad2.left_stick_y * (liftUpperLimit - crunchy.liftLeft.getCurrentPosition()) / 500);
+            } else {
+                crunchy.liftLeft.setPower(gamepad2.left_stick_y);
+                crunchy.liftRight.setPower(gamepad2.left_stick_y);
             }
-        }
-        //if the lift is the above where is should be
-        else if (crunchy.liftLeft.getCurrentPosition() > liftUpperLimit) {
-            //you can go down
-            if (gamepad2.left_stick_y < 0) {
-                crunchy.liftLeft.setPower(gamepad2.left_stick_y * .1);
-                crunchy.liftRight.setPower(gamepad2.left_stick_y * .1);
-            }
-            //but not up
-            else
-            {
+        } else if (gamepad2.left_stick_y > 0) {
+            if (crunchy.liftLeft.getCurrentPosition() < liftLowerLimit) {
                 crunchy.liftLeft.setPower(0);
                 crunchy.liftRight.setPower(0);
+            } else if (crunchy.liftLeft.getCurrentPosition() < liftLowerLimit + 200) {
+                crunchy.liftLeft.setPower(gamepad2.left_stick_y * .2);
+                crunchy.liftRight.setPower(gamepad2.left_stick_y * .2);
+            } else if (crunchy.liftLeft.getCurrentPosition() < liftLowerLimit + 500) {
+                crunchy.liftLeft.setPower(gamepad2.left_stick_y * (crunchy.liftLeft.getCurrentPosition() - liftLowerLimit) / 500);
+                crunchy.liftRight.setPower(gamepad2.left_stick_y * (crunchy.liftLeft.getCurrentPosition() - liftLowerLimit) / 500);
+            } else {
+                crunchy.liftLeft.setPower(gamepad2.left_stick_y);
+                crunchy.liftRight.setPower(gamepad2.left_stick_y);
             }
-        }
-        else if (crunchy.liftLeft.getCurrentPosition() < liftLowerLimit + 100){
-            crunchy.liftLeft.setPower(gamepad2.left_stick_y * .1);
-            crunchy.liftRight.setPower(gamepad2.left_stick_y * .1);
-        }
-        else if (crunchy.liftLeft.getCurrentPosition() < liftLowerLimit + 500) {
-            crunchy.liftLeft.setPower(gamepad2.left_stick_y * (crunchy.liftLeft.getCurrentPosition() - liftLowerLimit)/500);
-            crunchy.liftRight.setPower(gamepad2.left_stick_y * (crunchy.liftLeft.getCurrentPosition() - liftLowerLimit)/500);
-        }
-        else if (crunchy.liftLeft.getCurrentPosition() > liftUpperLimit - 100){
-            crunchy.liftLeft.setPower(gamepad2.left_stick_y * .1);
-            crunchy.liftRight.setPower(gamepad2.left_stick_y * .1);
-        }
-        else if (crunchy.liftLeft.getCurrentPosition() > liftUpperLimit - 500) {
-            crunchy.liftLeft.setPower(gamepad2.left_stick_y *(liftUpperLimit - crunchy.liftLeft.getCurrentPosition())/500);
-            crunchy.liftRight.setPower(gamepad2.left_stick_y *(liftUpperLimit - crunchy.liftLeft.getCurrentPosition())/500);
-        }
-        else{
-            crunchy.liftLeft.setPower(gamepad2.left_stick_y);
-            crunchy.liftRight.setPower(gamepad2.left_stick_y);
+
+        } else {
+            crunchy.liftLeft.setPower(0);
+            crunchy.liftRight.setPower(0);
         }
     }
 

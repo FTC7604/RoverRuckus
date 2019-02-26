@@ -14,6 +14,9 @@ import org.firstinspires.ftc.teamcode.util.vision.VisionTracking;
 
 public class Autonomous extends DWAILinearOpMode
 {
+    // FIXME: Find a better solution than static/global variable
+    public static boolean isRed = true;
+
     //creates the runtime
     private ElapsedTime runtime = new ElapsedTime();
     private CrunchyAutonomous crunchy;
@@ -90,12 +93,11 @@ public class Autonomous extends DWAILinearOpMode
 
     private VisionTracking tracking;
     private boolean isCraterPosition;
-    private boolean isRed;
 
     public Autonomous(boolean isCraterPosition, boolean isRed)
     {
         this.isCraterPosition = isCraterPosition;
-        this.isRed = isRed;
+        Autonomous.isRed = isRed;
     }
 
     @Override
@@ -107,7 +109,7 @@ public class Autonomous extends DWAILinearOpMode
         //Setting up all processes
         crunchy = new CrunchyAutonomous(this);
 
-        if(isRed) crunchy.blinkinLedDriver.setPattern(RevBlinkinLedDriver.BlinkinPattern.SHOT_RED);
+        if(isRed) crunchy.blinkinLedDriver.setPattern(RevBlinkinLedDriver.BlinkinPattern.LARSON_SCANNER_RED);
         else crunchy.blinkinLedDriver.setPattern(RevBlinkinLedDriver.BlinkinPattern.SHOT_BLUE);
 
         //resets all the encoders
