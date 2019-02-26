@@ -44,6 +44,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.teamcode.util.Crunchy;
+import org.firstinspires.ftc.teamcode.util.IMUControl;
 import org.firstinspires.ftc.teamcode.util.PropertiesLoader;
 
 import java.util.Locale;
@@ -66,6 +67,7 @@ import static java.lang.Math.signum;
 
 public class RRFullTeleop extends LinearOpMode {
 
+    private IMUControl IMUcontrol = new IMUControl();
     private ElapsedTime runtime = new ElapsedTime();
 
     //hook
@@ -473,25 +475,63 @@ public class RRFullTeleop extends LinearOpMode {
         }
     }
 
-    private void RunDrive () {
-        double y = (((-gamepad1.left_stick_y)*(abs(-gamepad1.left_stick_y))+((-gamepad1.right_stick_y)*(abs(-gamepad1.right_stick_y))))/2);
-        double x = (((-gamepad1.left_stick_x)*(abs(-gamepad1.left_stick_x))+((-gamepad1.right_stick_x)*(abs(-gamepad1.right_stick_x))))/2);
-        double turnVal = (((-gamepad1.left_stick_y)-(-gamepad1.right_stick_y))/2);
+    private double currentAngle = 0;
+    private double desiredAngle = 0;
 
-        if(gamepad1.right_bumper) {
-            y *= SLOW_MULTIPLIER;
-            x *= SLOW_MULTIPLIER;
-            turnVal *= abs(SLOW_MULTIPLIER);
+    private Toggle fieldCentric = new Toggle();
+    private Toggle stabilize = new Toggle();
+
+    private void RunDrive () {
+        //0 is strafe, 1 is forward, 2 is rotation
+        double[] inputs = new double[3];
+
+        fieldCentric.update(gamepad1.x);
+        stabilize.update(gamepad1.b);
+
+        if((fieldCentric.get() || stabilize.get())){
+            //gets the yaw
+            currentAngle = IMUControl.getYaw(currentAngle, crunchy.imu1, crunchy.imu2);
+            telemetry.addLine("IT is trying to access the IMUs");
         }
 
-        crunchy.frontLeft.setPower(y-x+turnVal);
-        crunchy.backLeft.setPower(y+x+turnVal);
-        crunchy.frontRight.setPower(y+x-turnVal);
-        crunchy.backRight.setPower(y-x-turnVal);
+        if(fieldCentric.get()){
+            //my imputs
+            inputs[0] = Math.pow(-gamepad1.left_stick_x, 3);
+            inputs[1] = Math.pow(-gamepad1.left_stick_y, 3);
+            inputs[2] = Math.pow(-gamepad1.right_stick_x, 3);
 
-//        telemetry.addData("y", y);
-//        telemetry.addData("x", x);
-//        telemetry.addData("turnval", turnVal);
+            //this will compensate for that imput
+            IMUControl.compensate(inputs, currentAngle);
+            telemetry.addLine("trying to run fieldcentric");
+        }
+        else {
+            //casey's insanity
+            inputs[1] = (((-gamepad1.left_stick_y) * (abs(-gamepad1.left_stick_y)) + ((-gamepad1.right_stick_y) * (abs(-gamepad1.right_stick_y)))) / 2);
+            inputs[0] = (((-gamepad1.left_stick_x) * (abs(-gamepad1.left_stick_x)) + ((-gamepad1.right_stick_x) * (abs(-gamepad1.right_stick_x)))) / 2);
+            inputs[2] = (((-gamepad1.left_stick_y) - (-gamepad1.right_stick_y)) / 2);
+        }
+
+        if(stabilize.get()){
+            //if stabilize mode has just started then it changes
+            if(stabilize.changed())desiredAngle = currentAngle;
+            //desiredAngle is increase
+            desiredAngle += .000001 * inputs[2];
+            inputs[2] = currentAngle - desiredAngle;
+            telemetry.addLine("trying to stabilize");
+        }
+
+        //this is the slow mode
+        if(gamepad1.right_bumper) {
+            inputs[0] *= SLOW_MULTIPLIER;
+            inputs[1] *= SLOW_MULTIPLIER;
+            inputs[2] *= abs(SLOW_MULTIPLIER);
+        }
+
+        //finally this send the stuf to the motor.
+        crunchy.frontLeft.setPower(inputs[1]-inputs[0]+inputs[2]);
+        crunchy.backLeft.setPower(inputs[1]+inputs[0]+inputs[2]);
+        crunchy.frontRight.setPower(inputs[1]+inputs[0]-inputs[2]);
+        crunchy.backRight.setPower(inputs[1]-inputs[0]-inputs[2]);
     }
 
     private void HoldPhoneAndSample () {
