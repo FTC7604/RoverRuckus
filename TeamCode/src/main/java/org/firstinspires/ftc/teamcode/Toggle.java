@@ -4,8 +4,8 @@ package org.firstinspires.ftc.teamcode;
 public class Toggle {
     //toggle is duh, loop is the previous loop
     private boolean toggle;
-    private boolean pastLoop;
-    private boolean currentLoop;
+    private boolean oldLoop;
+    private boolean newLoop;
 
     //creates the toggle as either any value
     Toggle(boolean start){toggle = start;}
@@ -15,14 +15,17 @@ public class Toggle {
     public boolean get(){ return toggle;}
     //indicates wether or not the switch has toggled
     public boolean changed(){
-        if(currentLoop != pastLoop)return true;
+        if(newLoop != oldLoop)return true;
         else return false;
     }
     //changes the toggle based on the new data
-    public void update(boolean currentLoop){
-        this.currentLoop = currentLoop;
+    public void update(boolean imput) {
+        oldLoop = newLoop;
+        newLoop = imput;
 
-        if(changed())toggle = this.currentLoop;
-        pastLoop = this.currentLoop;
+        if (changed()) {
+            if (toggle) toggle = false;
+            else toggle = true;
+        }
     }
 }
