@@ -101,6 +101,13 @@ public class RRFullTeleop extends LinearOpMode {
         WHITE,
     }
 
+    private boolean intakeIsFull(){
+        if(left != Particle.NONE && right != Particle.NONE){
+            return true;
+        }
+        else return false;
+    }
+
     private long startTime = 0;
 
     private int time()
@@ -129,8 +136,7 @@ public class RRFullTeleop extends LinearOpMode {
 
         while (opModeIsActive()) {
 
-            crunchy.intake.setPower(gamepad2.right_stick_y);
-//            runIntake();
+            runIntake();
 
             RunLift();
 
@@ -186,7 +192,7 @@ public class RRFullTeleop extends LinearOpMode {
                 //            This should read like a CSS document, with the pattern being modified if the situation calls for it
                 //            Essentially, the least important stuff is at the l=top and the most important stuff is at the bottom.
 
-                boolean redAlliance = true;
+                boolean redAlliance = Autonomous.isRed;
 
                 //stuff for the Red alliance which changes as time decreases
                 if (redAlliance)
@@ -280,61 +286,34 @@ public class RRFullTeleop extends LinearOpMode {
             }
         }
     }
-    //three little methods for processing the imput of the color sensor
-    //they also can go into crunchy, along w the enum to make things easier
-    @Deprecated
-    private boolean isYellow(int r, int g, int b) {
-        //rgb(252, 200, 30) is a similar color to the yellow cube
-        //given that its on a black background it doesn't seem like its too big of a deal
 
-        boolean isYellow = true;
-
-        if(!colorCheck(r,252,50))isYellow = false;
-        else if(!colorCheck(g,200,50))isYellow = false;
-        else if(!colorCheck(b,30,50))isYellow = false;
-
-        return isYellow;
-    }
-
-    @Deprecated
-    private boolean isWhite(int r, int g, int b) {
-        //rgb(249, 242, 217) is a similar color to the white ball
-        //given that its on a black background it doesn't seem like its too big of a deal
-
-        boolean isWhite = true;
-
-        if(!colorCheck(r,249,50))isWhite = false;
-        else if(!colorCheck(g,242,50))isWhite = false;
-        else if(!colorCheck(b,217,50))isWhite = false;
-
-        return isWhite;
-    }
-    private boolean colorCheck(int maybe, int color, int range) {
-        int upper = 0;
-        int lower = 0;
-
-        //puts a ceiling on the highest possible value that the upper limit acn be
-        if (color + range > 255) upper = 255;
-        else upper = color + range;
-
-        //puts a floor on the lowest possible value that the lower limit can be
-        if (color - range > 0) lower = 0;
-        else lower = color - range;
-
-        //checks to see if its in between the 2, returns true if it is.
-        if (maybe >= lower && maybe <= upper) return true;
-        else return false;
-    }
-
+    //maybe and jam variable that we can then use to unjam the robot.
+    
+//    private double lastTimeIntakeOn;
+//    private double positionIntake;
+//    private double oldPositionIntake;
+//    private double newPositionIntake;
+//
+//    private boolean intakeIsJammed(){
+//
+//        if (abs(gamepad2.right_stick_y) > .1)lastTimeIntakeOn = time;
+//
+//        oldPositionIntake = crunchy.intake.getCurrentPosition();
+//
+//        positionIntake = (newPositionIntake - oldPositionIntake)
+//        if(time - lastTimeIntakeOn > .25) {
+//            positionIntake = .75 * positionIntake + .25 * crunchy.intake.getCurrentPosition();
+//        }
+//
+//        newPositionIntake = oldPositionIntake;
+//    }
 
     private void runIntake(){
-        int intakePosition = crunchy.intake.getCurrentPosition() % (1440 / 2);
-        if(abs(gamepad2.right_stick_y) > 2) {
-            crunchy.intake.setPower(gamepad2.right_stick_y);
+        if(intakeIsFull()){
+            if (gamepad2.right_stick_y < 0) crunchy.intake.setPower(gamepad2.right_stick_y);
+            else crunchy.intake.setPower(0);
         }
-        else if(intakePosition > (1440 - 200)/2 || intakePosition < 100) {
-                crunchy.intake.setPower(.5);
-        }
+        else crunchy.intake.setPower(gamepad2.right_stick_y);
     }
     
     //toggles between engaged and disengaged position
@@ -416,7 +395,7 @@ public class RRFullTeleop extends LinearOpMode {
             else
             {
                 crunchy.intakeLift.setPower(intakeliftUp);
-                crunchy.intake.setPower(-1);
+//                crunchy.intake.setPower(-0.5);
             }
         }
         else if ((!intakeTargetIsUp) && (crunchy.intakeLift.getCurrentPosition() > intakeLowerLimit))
@@ -432,46 +411,38 @@ public class RRFullTeleop extends LinearOpMode {
 
         //Lifter controls, Negative is up, positive is down Hang is the other way around
 
-        //if the lift is below where it is supposed to be
-        if (crunchy.liftLeft.getCurrentPosition() < liftLowerLimit) {
-            //you can go up
-            if (gamepad2.left_stick_y > 0) {
+        if (gamepad2.left_stick_y > 0) {
+            if (crunchy.liftLeft.getCurrentPosition() > liftUpperLimit) {
+                crunchy.liftLeft.setPower(0);
+                crunchy.liftRight.setPower(0);
+            } else if (crunchy.liftLeft.getCurrentPosition() > liftUpperLimit - 200) {
+                crunchy.liftLeft.setPower(gamepad2.left_stick_y * .2);
+                crunchy.liftRight.setPower(gamepad2.left_stick_y * .2);
+            } else if (crunchy.liftLeft.getCurrentPosition() > liftUpperLimit - 500) {
+                crunchy.liftLeft.setPower(gamepad2.left_stick_y * (liftUpperLimit - crunchy.liftLeft.getCurrentPosition()) / 500);
+                crunchy.liftRight.setPower(gamepad2.left_stick_y * (liftUpperLimit - crunchy.liftLeft.getCurrentPosition()) / 500);
+            } else {
                 crunchy.liftLeft.setPower(gamepad2.left_stick_y);
                 crunchy.liftRight.setPower(gamepad2.left_stick_y);
             }
-            //but not down
-            else {
+        } else if (gamepad2.left_stick_y < 0) {
+            if (crunchy.liftLeft.getCurrentPosition() < liftLowerLimit) {
                 crunchy.liftLeft.setPower(0);
                 crunchy.liftRight.setPower(0);
-            }
-        }
-        //if the lift is the above where is should be
-        else if (crunchy.liftLeft.getCurrentPosition() > liftUpperLimit) {
-            //you can go down
-            if (gamepad2.left_stick_y < 0) {
+            } else if (crunchy.liftLeft.getCurrentPosition() < liftLowerLimit + 200) {
+                crunchy.liftLeft.setPower(gamepad2.left_stick_y * .2);
+                crunchy.liftRight.setPower(gamepad2.left_stick_y * .2);
+            } else if (crunchy.liftLeft.getCurrentPosition() < liftLowerLimit + 500) {
+                crunchy.liftLeft.setPower(gamepad2.left_stick_y * (crunchy.liftLeft.getCurrentPosition() - liftLowerLimit) / 500);
+                crunchy.liftRight.setPower(gamepad2.left_stick_y * (crunchy.liftLeft.getCurrentPosition() - liftLowerLimit) / 500);
+            } else {
                 crunchy.liftLeft.setPower(gamepad2.left_stick_y);
                 crunchy.liftRight.setPower(gamepad2.left_stick_y);
             }
-            //but not down
-            else
-            {
-                crunchy.liftLeft.setPower(0);
-                crunchy.liftRight.setPower(0);
-            }
-        }
-        else if (crunchy.liftLeft.getCurrentPosition() < liftLowerLimit + 300 && gamepad2.left_stick_y < 0)
-        {
-            crunchy.liftLeft.setPower(gamepad2.left_stick_y / 2);
-            crunchy.liftRight.setPower(gamepad2.left_stick_y / 2);
-        }
-        else if (crunchy.liftLeft.getCurrentPosition() > liftUpperLimit - 300  && gamepad2.left_stick_y > 0)
-        {
-            crunchy.liftLeft.setPower(gamepad2.left_stick_y / 2);
-            crunchy.liftRight.setPower(gamepad2.left_stick_y / 2);
-        }
-        else{
-            crunchy.liftLeft.setPower(gamepad2.left_stick_y);
-            crunchy.liftRight.setPower(gamepad2.left_stick_y);
+
+        } else {
+            crunchy.liftLeft.setPower(0);
+            crunchy.liftRight.setPower(0);
         }
     }
 

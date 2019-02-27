@@ -225,4 +225,8 @@ public class Crunchy
             (imu1.getAngularOrientation().thirdAngle + imu2.getAngularOrientation().thirdAngle) / 2 //Pitch
         };
     }
+
+    public double getIMUYaw(){return (imu1.getAngularOrientation().firstAngle + imu2.getAngularOrientation().firstAngle) / 2;}
+    public double getIMURoll(){return (imu1.getAngularOrientation().secondAngle + imu2.getAngularOrientation().secondAngle) / 2;}
+    public double getIMUPitch(){return (imu1.getAngularOrientation().thirdAngle + imu2.getAngularOrientation().thirdAngle) / 2;}
 }
