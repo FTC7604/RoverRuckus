@@ -109,8 +109,8 @@ public class Autonomous extends DWAILinearOpMode
         //Setting up all processes
         crunchy = new CrunchyAutonomous(this);
 
-        if(isRed) crunchy.blinkinLedDriver.setPattern(RevBlinkinLedDriver.BlinkinPattern.LARSON_SCANNER_RED);
-        else crunchy.blinkinLedDriver.setPattern(RevBlinkinLedDriver.BlinkinPattern.SHOT_BLUE);
+        if(isRed) crunchy.blinkinLedDriver.setPattern(RevBlinkinLedDriver.BlinkinPattern.LIGHT_CHASE_RED);
+        else crunchy.blinkinLedDriver.setPattern(RevBlinkinLedDriver.BlinkinPattern.LIGHT_CHASE_BLUE);
 
         //resets all the encoders
         crunchy.intakeLift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
