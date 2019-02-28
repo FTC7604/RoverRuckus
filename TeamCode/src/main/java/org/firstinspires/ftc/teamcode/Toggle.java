@@ -13,19 +13,20 @@ public class Toggle {
 
     //returns the value of the toggle
     public boolean get(){ return toggle;}
+
     //indicates wether or not the switch has toggled
     public boolean changed(){
-        if(newLoop != oldLoop)return true;
-        else return false;
+        return newLoop != oldLoop;
     }
+
     //changes the toggle based on the new data
     public void update(boolean imput) {
         oldLoop = newLoop;
         newLoop = imput;
 
-        if (changed()) {
+        if (changed() && newLoop) {
             if (toggle) toggle = false;
-            else toggle = true;
+            else if(!toggle) toggle = true;
         }
     }
 }

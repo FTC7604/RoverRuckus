@@ -83,7 +83,8 @@ public class Crunchy
     public Crunchy(OpMode opMode)
     {
         mapHardware(opMode.hardwareMap);
-        initIMU();
+        createIMUs();
+        calibrateIMUs();
     }
 
     //Hardware mapping
@@ -147,19 +148,20 @@ public class Crunchy
         blinkinLedDriver = hardwareMap.get(RevBlinkinLedDriver.class, "b");
     }
 
-    private void initIMU()
-    {
+    private void createIMUs(){
         BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
         parameters.loggingEnabled = true;
         parameters.loggingTag = "IMU";
+
         imu1.initialize(parameters);
         imu2.initialize(parameters);
-        BNO055IMU.CalibrationData calibrationData1 = imu1.readCalibrationData();
+    }
+    public void calibrateIMUs(){
         File file1 = AppUtil.getInstance().getSettingsFile("AdafruitIMUCalibration1.json");
-        ReadWriteFile.writeFile(file1, calibrationData1.serialize());
-        BNO055IMU.CalibrationData calibrationData2 = imu2.readCalibrationData();
+        ReadWriteFile.writeFile(file1, imu1.readCalibrationData().serialize());
+
         File file2 = AppUtil.getInstance().getSettingsFile("AdafruitIMUCalibration2.json");
-        ReadWriteFile.writeFile(file2, calibrationData2.serialize());
+        ReadWriteFile.writeFile(file2, imu2.readCalibrationData().serialize());
     }
 
     public double getDriveEncoderValue()
@@ -226,7 +228,7 @@ public class Crunchy
         };
     }
 
-    public double getIMUYaw(){return (imu1.getAngularOrientation().firstAngle + imu2.getAngularOrientation().firstAngle) / 2;}
-    public double getIMURoll(){return (imu1.getAngularOrientation().secondAngle + imu2.getAngularOrientation().secondAngle) / 2;}
-    public double getIMUPitch(){return (imu1.getAngularOrientation().thirdAngle + imu2.getAngularOrientation().thirdAngle) / 2;}
+    public double getIMUYaw(){return (imu1.getAngularOrientation().firstAngle + imu2.getAngularOrientation().firstAngle)/2;}
+    public double getIMURoll(){return (imu1.getAngularOrientation().secondAngle + imu2.getAngularOrientation().secondAngle)/2;}
+    public double getIMUPitch(){return (imu1.getAngularOrientation().thirdAngle + imu2.getAngularOrientation().thirdAngle)/2;}
 }

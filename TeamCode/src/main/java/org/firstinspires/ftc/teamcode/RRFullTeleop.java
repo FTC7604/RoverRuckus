@@ -32,7 +32,6 @@ package org.firstinspires.ftc.teamcode;
 
 
 import com.qualcomm.hardware.rev.RevBlinkinLedDriver;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.ColorSensor;
@@ -41,7 +40,6 @@ import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.teamcode.util.Crunchy;
 import org.firstinspires.ftc.teamcode.util.IMUControl;
@@ -115,7 +113,7 @@ public class RRFullTeleop extends LinearOpMode {
         return (int) ((System.currentTimeMillis() - startTime) / 1000);
     }
 
-    int colorLoop = 0;
+    int loop = 0;
 
     @Override
     public void runOpMode() {
@@ -181,9 +179,9 @@ public class RRFullTeleop extends LinearOpMode {
 //                right = Particle.WHITE;
 //            else right = Particle.NONE;
 
-            if(colorLoop++ == COLOR_SENSOR_LOOP_CYCLES)
+            if(loop++ == COLOR_SENSOR_LOOP_CYCLES)
             {
-                colorLoop = 0;
+                loop = 0;
                 RevBlinkinLedDriver.BlinkinPattern oldPattern = pattern;
 
                 left = getParticle(crunchy.colorLeft, crunchy.distanceLeft);
@@ -446,8 +444,8 @@ public class RRFullTeleop extends LinearOpMode {
         }
     }
 
-    private double currentAngle = 0;
-    private double desiredAngle = 0;
+    private double desiredAngle;
+    private double currentAngle;
 
     private Toggle fieldCentric = new Toggle();
     private Toggle stabilize = new Toggle();
@@ -459,11 +457,17 @@ public class RRFullTeleop extends LinearOpMode {
         fieldCentric.update(gamepad1.x);
         stabilize.update(gamepad1.b);
 
-        if((fieldCentric.get() || stabilize.get())){
-            //gets the yaw
-            currentAngle = IMUControl.getYaw(currentAngle, crunchy.imu1, crunchy.imu2);
-            telemetry.addLine("IT is trying to access the IMUs");
+        if(gamepad1.a){
+            crunchy.calibrateIMUs();
+            desiredAngle = crunchy.getIMUYaw();
         }
+        if((fieldCentric.get() || stabilize.get()) && loop == COLOR_SENSOR_LOOP_CYCLES){
+            currentAngle = crunchy.getIMUYaw();
+        }
+        if(fieldCentric.changed() || stabilize.changed()){
+            desiredAngle = currentAngle;
+        }
+
 
         if(fieldCentric.get()){
             //my imputs
@@ -473,7 +477,7 @@ public class RRFullTeleop extends LinearOpMode {
 
             //this will compensate for that imput
             IMUControl.compensate(inputs, currentAngle);
-            telemetry.addLine("trying to run fieldcentric");
+            telemetry.addLine("Trying to run field-centric");
         }
         else {
             //casey's insanity
@@ -486,10 +490,12 @@ public class RRFullTeleop extends LinearOpMode {
             //if stabilize mode has just started then it changes
             if(stabilize.changed())desiredAngle = currentAngle;
             //desiredAngle is increase
-            desiredAngle += .000001 * inputs[2];
+            desiredAngle += .01 * inputs[2];
+
             inputs[2] = currentAngle - desiredAngle;
-            telemetry.addLine("trying to stabilize");
+            telemetry.addLine("Trying to stabilize");
         }
+
 
         //this is the slow mode
         if(gamepad1.right_bumper) {
