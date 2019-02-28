@@ -50,6 +50,7 @@ import java.util.Locale;
 import static com.qualcomm.hardware.rev.RevBlinkinLedDriver.BlinkinPattern.COLOR_WAVES_LAVA_PALETTE;
 import static com.qualcomm.hardware.rev.RevBlinkinLedDriver.BlinkinPattern.CP1_2_COLOR_GRADIENT;
 import static com.qualcomm.hardware.rev.RevBlinkinLedDriver.BlinkinPattern.GOLD;
+import static com.qualcomm.hardware.rev.RevBlinkinLedDriver.BlinkinPattern.WHITE;
 import static com.qualcomm.hardware.rev.RevBlinkinLedDriver.BlinkinPattern.HEARTBEAT_BLUE;
 import static com.qualcomm.hardware.rev.RevBlinkinLedDriver.BlinkinPattern.HEARTBEAT_RED;
 import static com.qualcomm.hardware.rev.RevBlinkinLedDriver.BlinkinPattern.RAINBOW_OCEAN_PALETTE;
@@ -58,7 +59,6 @@ import static com.qualcomm.hardware.rev.RevBlinkinLedDriver.BlinkinPattern.STROB
 import static com.qualcomm.hardware.rev.RevBlinkinLedDriver.BlinkinPattern.STROBE_RED;
 import static com.qualcomm.hardware.rev.RevBlinkinLedDriver.BlinkinPattern.STROBE_WHITE;
 import static java.lang.Math.abs;
-import static java.lang.Math.signum;
 
 @TeleOp(name="RR Full Teleop", group="Linear Opmode")
 //@Disabled
@@ -236,7 +236,7 @@ public class RRFullTeleop extends LinearOpMode {
                     //if they are both white then remain white
                     else if (left == Particle.WHITE && right == Particle.WHITE)
                     {
-                        pattern = RevBlinkinLedDriver.BlinkinPattern.WHITE;
+                        pattern = WHITE;
                     }
                 }
 
@@ -461,8 +461,10 @@ public class RRFullTeleop extends LinearOpMode {
             crunchy.calibrateIMUs();
             desiredAngle = crunchy.getIMUYaw();
         }
+
         if((fieldCentric.get() || stabilize.get()) && loop == COLOR_SENSOR_LOOP_CYCLES){
             currentAngle = crunchy.getIMUYaw();
+            desiredAngle = currentAngle;
         }
         if(fieldCentric.changed() || stabilize.changed()){
             desiredAngle = currentAngle;
