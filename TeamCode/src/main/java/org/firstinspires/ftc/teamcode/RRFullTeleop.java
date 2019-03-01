@@ -457,19 +457,9 @@ public class RRFullTeleop extends LinearOpMode {
         fieldCentric.update(gamepad1.x);
         stabilize.update(gamepad1.b);
 
-        if(gamepad1.a){
-            crunchy.calibrateIMUs();
-            desiredAngle = crunchy.getIMUYaw();
-        }
-
         if((fieldCentric.get() || stabilize.get()) && loop == COLOR_SENSOR_LOOP_CYCLES){
             currentAngle = crunchy.getIMUYaw();
-            desiredAngle = currentAngle;
         }
-        if(fieldCentric.changed() || stabilize.changed()){
-            desiredAngle = currentAngle;
-        }
-
 
         if(fieldCentric.get()){
             //my imputs
@@ -492,7 +482,7 @@ public class RRFullTeleop extends LinearOpMode {
             //if stabilize mode has just started then it changes
             if(stabilize.changed())desiredAngle = currentAngle;
             //desiredAngle is increase
-            desiredAngle += .01 * inputs[2];
+            desiredAngle += .05 * inputs[2];
 
             inputs[2] = currentAngle - desiredAngle;
             telemetry.addLine("Trying to stabilize");

@@ -83,8 +83,7 @@ public class Crunchy
     public Crunchy(OpMode opMode)
     {
         mapHardware(opMode.hardwareMap);
-        createIMUs();
-        calibrateIMUs();
+        initIMU();
     }
 
     //Hardware mapping
@@ -148,15 +147,14 @@ public class Crunchy
         blinkinLedDriver = hardwareMap.get(RevBlinkinLedDriver.class, "b");
     }
 
-    private void createIMUs(){
+    private void initIMU(){
         BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
         parameters.loggingEnabled = true;
         parameters.loggingTag = "IMU";
 
         imu1.initialize(parameters);
         imu2.initialize(parameters);
-    }
-    public void calibrateIMUs(){
+
         File file1 = AppUtil.getInstance().getSettingsFile("AdafruitIMUCalibration1.json");
         ReadWriteFile.writeFile(file1, imu1.readCalibrationData().serialize());
 
