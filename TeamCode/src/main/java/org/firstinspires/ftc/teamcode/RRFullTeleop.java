@@ -78,20 +78,27 @@ public class RRFullTeleop extends LinearOpMode {
     private boolean intakeCurrState = false;
     private boolean intakePrevState = false;
 
+    private boolean intakeLiftOverride = false;
+
     private Crunchy crunchy;
 
     private PropertiesLoader loader = new PropertiesLoader("RRFullTeleop");
     private final double SLOW_MULTIPLIER = loader.getDoubleProperty("slowMultiplier");
     private final double SLOW_SERVO_SPEED = loader.getDoubleProperty("slowServoSpeed");
-    private final boolean SHOW_COLOR_FORMAT_DATA = loader.getBooleanProperty("showColorFormatData");
     private final int COLOR_SENSOR_LOOP_CYCLES = loader.getIntegerProperty("colorSensorLoopCycles");
+
+    private final boolean SHOW_TELEMETRY = loader.getBooleanProperty("showTelemetry");
+    private final boolean SHOW_LIFT_VALUE = loader.getBooleanProperty("showLiftValue");
+    private final boolean SHOW_COLOR_FORMAT_DATA = loader.getBooleanProperty("showColorFormatData");
+
+    private int LIFT_LOWER_LIMIT, LIFT_UPPER_LIMIT;
+    private boolean resetLiftMode = false;
 
     //stuff that I need to put in crunchy but am too excited to set up the leds
     RevBlinkinLedDriver.BlinkinPattern pattern;
 
     Particle left;
     Particle right;
-
     //little enum for the color sensors.
     private enum Particle {
         NONE,
@@ -119,6 +126,9 @@ public class RRFullTeleop extends LinearOpMode {
     public void runOpMode() {
         crunchy = new Crunchy(this);
 
+        LIFT_LOWER_LIMIT = crunchy.LIFT_LOWER_LIMIT;
+        LIFT_UPPER_LIMIT = crunchy.LIFT_UPPER_LIMIT;
+
         telemetry.addData("Status", "Initialized");
         telemetry.update();
 
@@ -136,9 +146,9 @@ public class RRFullTeleop extends LinearOpMode {
 
             runIntake();
 
-            RunLift();
-
             RunIntakeLift();
+
+            RunLift();
 
             RunDrive();
 
@@ -246,7 +256,9 @@ public class RRFullTeleop extends LinearOpMode {
                 }
             }
 
-            telemetry.update();
+            if(SHOW_TELEMETRY) {
+                telemetry.update();
+            }
         }
     }
 
@@ -307,11 +319,13 @@ public class RRFullTeleop extends LinearOpMode {
 //    }
 
     private void runIntake(){
-        if(intakeIsFull()){
-            if (gamepad2.right_stick_y < 0) crunchy.intake.setPower(gamepad2.right_stick_y);
-            else crunchy.intake.setPower(0);
-        }
-        else crunchy.intake.setPower(gamepad2.right_stick_y);
+//        if(intakeIsFull()){
+//            if (gamepad2.right_stick_y < 0) crunchy.intake.setPower(gamepad2.right_stick_y);
+//            else crunchy.intake.setPower(0);
+//        }
+//        else crunchy.intake.setPower(gamepad2.right_stick_y);
+
+        crunchy.intake.setPower(gamepad2.right_stick_y);
     }
     
     //toggles between engaged and disengaged position
@@ -376,24 +390,24 @@ public class RRFullTeleop extends LinearOpMode {
         {
             intakeTargetIsUp = !intakeTargetIsUp;
 
-//            if(intakeTargetIsUp && crunchy.liftLeft.getCurrentPosition() > crunchy.LIFT_LOWER_LIMIT && hookIsOpen)
+//            if(intakeTargetIsUp && crunchy.liftLeft.getCurrentPosition() > LIFT_LOWER_LIMIT && hookIsOpen)
 //            {
 //                intakeTargetIsUp = false;
 //            }
         }
         intakePrevState = intakeCurrState;
 
+        intakeLiftOverride = false;
+
         if ((intakeTargetIsUp) && (crunchy.intakeLift.getCurrentPosition() < intakeUpperLimit))
         {
-            if(crunchy.liftLeft.getCurrentPosition() > crunchy.LIFT_LOWER_LIMIT && hookIsOpen)
+            if(crunchy.liftLeft.getCurrentPosition() > LIFT_LOWER_LIMIT && hookIsOpen && time() < 105)
             {
-                crunchy.liftLeft.setPower(-0.5);
-                crunchy.liftRight.setPower(-0.5);
+                intakeLiftOverride = true;
             }
             else
             {
                 crunchy.intakeLift.setPower(intakeliftUp);
-//                crunchy.intake.setPower(-0.5);
             }
         }
         else if ((!intakeTargetIsUp) && (crunchy.intakeLift.getCurrentPosition() > intakeLowerLimit))
@@ -404,10 +418,32 @@ public class RRFullTeleop extends LinearOpMode {
     }
 
     private void RunLift () {
-        int liftUpperLimit = crunchy.LIFT_UPPER_LIMIT;//I just did the math for the values because android studio got mad
-        int liftLowerLimit = crunchy.LIFT_LOWER_LIMIT;//the lift is all the way down, the plus is to compensate for lag.
+        if(intakeLiftOverride) {
+            crunchy.liftLeft.setPower(-0.5);
+            crunchy.liftRight.setPower(-0.5);
+            return;
+        }
+
+        if(gamepad2.left_trigger > 0.3 || gamepad2.right_trigger > 0.3) {
+            crunchy.liftLeft.setPower(-0.25);
+            crunchy.liftRight.setPower(-0.25);
+            resetLiftMode = true;
+            return;
+        }
+        else if (resetLiftMode) {
+            LIFT_LOWER_LIMIT = crunchy.liftLeft.getCurrentPosition();
+            LIFT_UPPER_LIMIT = LIFT_LOWER_LIMIT + (crunchy.LIFT_UPPER_LIMIT - crunchy.LIFT_LOWER_LIMIT);
+            resetLiftMode = false;
+        }
+
+        int liftUpperLimit = LIFT_UPPER_LIMIT;//I just did the math for the values because android studio got mad
+        int liftLowerLimit = LIFT_LOWER_LIMIT;//the lift is all the way down, the plus is to compensate for lag.
 
         //Lifter controls, Negative is up, positive is down Hang is the other way around
+
+        if(SHOW_LIFT_VALUE) {
+            telemetry.addData("lift value", crunchy.liftLeft.getCurrentPosition());
+        }
 
         if (gamepad2.left_stick_y > 0) {
             if (crunchy.liftLeft.getCurrentPosition() > liftUpperLimit) {
@@ -492,7 +528,7 @@ public class RRFullTeleop extends LinearOpMode {
         double roDown = 1- loDown;
         double roUp = 1-loUp;
 
-        double liftHalfway = 3100;
+        double liftHalfway = (LIFT_LOWER_LIMIT - crunchy.LIFT_LOWER_LIMIT) + 3100;
 
         boolean bucketControl = gamepad2.a;
         //controls of the bucket with gamapad1.a and makes sure that the user can't break the bot. It holds at a diagonal position when it can so that it keeps the particles
