@@ -463,9 +463,9 @@ public class RRFullTeleop extends LinearOpMode {
 
         if(fieldCentric.get()){
             //my imputs
-            inputs[0] = Math.pow(-gamepad1.left_stick_x, 3);
-            inputs[1] = Math.pow(-gamepad1.left_stick_y, 3);
-            inputs[2] = Math.pow(-gamepad1.right_stick_x, 3);
+            inputs[0] = Math.pow(-gamepad1.left_stick_x, 5);
+            inputs[1] = Math.pow(-gamepad1.left_stick_y, 5);
+            inputs[2] = Math.pow(-gamepad1.right_stick_x, 5);
 
             //this will compensate for that imput
             IMUControl.compensate(inputs, currentAngle);
@@ -482,7 +482,7 @@ public class RRFullTeleop extends LinearOpMode {
             //if stabilize mode has just started then it changes
             if(stabilize.changed())desiredAngle = currentAngle;
             //desiredAngle is increase
-            desiredAngle += .05 * inputs[2];
+            desiredAngle += -.05 * inputs[2];
 
             inputs[2] = currentAngle - desiredAngle;
             telemetry.addLine("Trying to stabilize");
