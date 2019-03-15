@@ -67,6 +67,7 @@ import static java.lang.Math.signum;
 public class RRFullTeleop extends LinearOpMode {
 
     private ElapsedTime runtime = new ElapsedTime();
+    private Motors motor = new Motors();
 
     //hook
     private boolean hookCurrState = false;
@@ -487,9 +488,9 @@ public class RRFullTeleop extends LinearOpMode {
 //            else if you are at the bottom/below {you can only go up
 
     private void RunDrive () {
-        double y = (((-gamepad1.left_stick_y)*(abs(-gamepad1.left_stick_y))+((-gamepad1.right_stick_y)*(abs(-gamepad1.right_stick_y))))/2);
-        double x = (((-gamepad1.left_stick_x)*(abs(-gamepad1.left_stick_x))+((-gamepad1.right_stick_x)*(abs(-gamepad1.right_stick_x))))/2);
-        double turnVal = (((-gamepad1.left_stick_y)-(-gamepad1.right_stick_y))/2);
+        double y = motor.controller(((-gamepad1.left_stick_y)*(abs(-gamepad1.left_stick_y))+((-gamepad1.right_stick_y)*(abs(-gamepad1.right_stick_y))))/2);
+        double x = motor.controller(((-gamepad1.left_stick_x)*(abs(-gamepad1.left_stick_x))+((-gamepad1.right_stick_x)*(abs(-gamepad1.right_stick_x))))/2);
+        double turnVal = motor.controller(((-gamepad1.left_stick_y)-(-gamepad1.right_stick_y))/2);
 
         if(gamepad1.right_bumper) {
             y *= SLOW_MULTIPLIER;
@@ -502,10 +503,11 @@ public class RRFullTeleop extends LinearOpMode {
         crunchy.frontRight.setPower(y+x-turnVal);
         crunchy.backRight.setPower(y-x-turnVal);
 
-//        telemetry.addData("y", y);
-//        telemetry.addData("x", x);
-//        telemetry.addData("turnval", turnVal);
+        telemetry.addData("y", y);
+        telemetry.addData("x", x);
+        telemetry.addData("turnval", turnVal);
     }
+
 
     private void HoldPhoneAndSample () {
         //phone mount
