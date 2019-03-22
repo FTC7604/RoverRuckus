@@ -44,6 +44,9 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.teamcode.util.Crunchy;
+import org.firstinspires.ftc.teamcode.util.LED;
+import org.firstinspires.ftc.teamcode.util.Motors;
+import org.firstinspires.ftc.teamcode.util.Step;
 import org.firstinspires.ftc.teamcode.util.PropertiesLoader;
 
 import java.util.Locale;
@@ -68,6 +71,7 @@ public class RRFullTeleop extends LinearOpMode {
 
     private ElapsedTime runtime = new ElapsedTime();
     private Motors motor = new Motors();
+    private LED LED;
 
     //hook
     private boolean hookCurrState = false;
@@ -138,6 +142,14 @@ public class RRFullTeleop extends LinearOpMode {
         pattern = RevBlinkinLedDriver.BlinkinPattern.RAINBOW_RAINBOW_PALETTE;
         crunchy.blinkinLedDriver.setPattern(pattern);
 
+        Step[] pinkBlueGreen = new Step[3];
+
+        pinkBlueGreen[0] = new Step(RevBlinkinLedDriver.BlinkinPattern.HOT_PINK,.5);
+        pinkBlueGreen[1] = new Step(RevBlinkinLedDriver.BlinkinPattern.SKY_BLUE,.5);
+        pinkBlueGreen[2] = new Step(RevBlinkinLedDriver.BlinkinPattern.LAWN_GREEN,.5);
+
+        LED strobePinkBlue = new LED(pinkBlueGreen, time);
+
         waitForStart();
         runtime.reset();
 
@@ -190,72 +202,74 @@ public class RRFullTeleop extends LinearOpMode {
 //                right = Particle.WHITE;
 //            else right = Particle.NONE;
 
-            if(colorLoop++ == COLOR_SENSOR_LOOP_CYCLES)
-            {
-                colorLoop = 0;
-                RevBlinkinLedDriver.BlinkinPattern oldPattern = pattern;
+//            if(colorLoop++ == COLOR_SENSOR_LOOP_CYCLES)
+//            {
+//                colorLoop = 0;
+//                RevBlinkinLedDriver.BlinkinPattern oldPattern = pattern;
+//
+//                left = getParticle(crunchy.colorLeft, crunchy.distanceLeft);
+//                right = getParticle(crunchy.colorRight, crunchy.distanceRight);
+//
+//                //            This should read like a CSS document, with the pattern being modified if the situation calls for it
+//                //            Essentially, the least important stuff is at the l=top and the most important stuff is at the bottom.
+//
+//                //stuff for the Red alliance which changes as time decreases
+//                if (Autonomous.isRed)
+//                {
+//                    pattern = COLOR_WAVES_LAVA_PALETTE;
+//                    if (time() >= 90) pattern = HEARTBEAT_RED;
+//                    if (time() >= 110) pattern = STROBE_RED;
+//                    if (time() >= 120) pattern = RAINBOW_WITH_GLITTER;
+//                }
+//
+//                //stuff for the blue alliance which changes as time decreases
+//                if (!Autonomous.isRed)
+//                {
+//                    pattern = RAINBOW_OCEAN_PALETTE;
+//                    if (time() >= 90) pattern = HEARTBEAT_BLUE;
+//                    if (time() >= 110) pattern = STROBE_RED;
+//                    if (time() >= 120) pattern = RAINBOW_WITH_GLITTER;
+//                }
+//
+//                //code for the particles that should only take affect when the intake is down
+//                if (!intakeTargetIsUp)
+//                {
+//                    //if one of the particles is yellow then strobe yellow.
+//                    if ((left == Particle.YELLOW && right == Particle.NONE) || (left == Particle.NONE && right == Particle.YELLOW))
+//                    {
+//                        pattern = STROBE_GOLD;
+//                    }
+//                    //if one of the particles is white then strobe white
+//                    else if ((left == Particle.WHITE && right == Particle.NONE) || (left == Particle.NONE && right == Particle.WHITE))
+//                    {
+//                        pattern = STROBE_WHITE;
+//                    }
+//                    //if particles are different then flash a gradient of the two colors
+//                    else if ((left == Particle.YELLOW && right == Particle.WHITE) || (left == Particle.WHITE && right == Particle.YELLOW))
+//                    {
+//                        pattern = CP1_2_COLOR_GRADIENT;
+//                    }
+//                    //if the are both yellow, then remain yellow
+//                    else if (left == Particle.YELLOW && right == Particle.YELLOW)
+//                    {
+//                        pattern = GOLD;
+//                    }
+//                    //if they are both white then remain white
+//                    else if (left == Particle.WHITE && right == Particle.WHITE)
+//                    {
+//                        pattern = RevBlinkinLedDriver.BlinkinPattern.WHITE;
+//                    }
+//                }
+//
+//                if(pattern != oldPattern)
+//                {
+//                    displayPattern();
+//                }
+//            }
 
-                left = getParticle(crunchy.colorLeft, crunchy.distanceLeft);
-                right = getParticle(crunchy.colorRight, crunchy.distanceRight);
-
-                //            This should read like a CSS document, with the pattern being modified if the situation calls for it
-                //            Essentially, the least important stuff is at the l=top and the most important stuff is at the bottom.
-
-                boolean redAlliance = Autonomous.isRed;
-
-                //stuff for the Red alliance which changes as time decreases
-                if (redAlliance)
-                {
-                    pattern = COLOR_WAVES_LAVA_PALETTE;
-                    if (time() >= 90) pattern = HEARTBEAT_RED;
-                    if (time() >= 110) pattern = STROBE_RED;
-                    if (time() >= 120) pattern = RAINBOW_WITH_GLITTER;
-                }
-
-                //stuff for the blue alliance which changes as time decreases
-                if (!redAlliance)
-                {
-                    pattern = RAINBOW_OCEAN_PALETTE;
-                    if (time() >= 90) pattern = HEARTBEAT_BLUE;
-                    if (time() >= 110) pattern = STROBE_RED;
-                    if (time() >= 120) pattern = RAINBOW_WITH_GLITTER;
-                }
-
-                //code for the particles that should only take affect when the intake is down
-                if (!intakeTargetIsUp)
-                {
-                    //if one of the particles is yellow then strobe yellow.
-                    if ((left == Particle.YELLOW && right == Particle.NONE) || (left == Particle.NONE && right == Particle.YELLOW))
-                    {
-                        pattern = STROBE_GOLD;
-                    }
-                    //if one of the particles is white then strobe white
-                    else if ((left == Particle.WHITE && right == Particle.NONE) || (left == Particle.NONE && right == Particle.WHITE))
-                    {
-                        pattern = STROBE_WHITE;
-                    }
-                    //if particles are different then flash a gradient of the two colors
-                    else if ((left == Particle.YELLOW && right == Particle.WHITE) || (left == Particle.WHITE && right == Particle.YELLOW))
-                    {
-                        pattern = CP1_2_COLOR_GRADIENT;
-                    }
-                    //if the are both yellow, then remain yellow
-                    else if (left == Particle.YELLOW && right == Particle.YELLOW)
-                    {
-                        pattern = GOLD;
-                    }
-                    //if they are both white then remain white
-                    else if (left == Particle.WHITE && right == Particle.WHITE)
-                    {
-                        pattern = RevBlinkinLedDriver.BlinkinPattern.WHITE;
-                    }
-                }
-
-                if(pattern != oldPattern)
-                {
-                    displayPattern();
-                }
-            }
+            strobePinkBlue.update(time);
+            if(strobePinkBlue.changed())pattern = strobePinkBlue.getPattern();
+            displayPattern();
 
             if(SHOW_TELEMETRY) {
                 telemetry.update();
@@ -488,9 +502,9 @@ public class RRFullTeleop extends LinearOpMode {
 //            else if you are at the bottom/below {you can only go up
 
     private void RunDrive () {
-        double y = motor.controller(((-gamepad1.left_stick_y)*(abs(-gamepad1.left_stick_y))+((-gamepad1.right_stick_y)*(abs(-gamepad1.right_stick_y))))/2);
-        double x = motor.controller(((-gamepad1.left_stick_x)*(abs(-gamepad1.left_stick_x))+((-gamepad1.right_stick_x)*(abs(-gamepad1.right_stick_x))))/2);
-        double turnVal = motor.controller(((-gamepad1.left_stick_y)-(-gamepad1.right_stick_y))/2);
+        double y = motor.humanController(((-gamepad1.left_stick_y)*(abs(-gamepad1.left_stick_y))+((-gamepad1.right_stick_y)*(abs(-gamepad1.right_stick_y))))/2);
+        double x = motor.humanController(((-gamepad1.left_stick_x)*(abs(-gamepad1.left_stick_x))+((-gamepad1.right_stick_x)*(abs(-gamepad1.right_stick_x))))/2);
+        double turnVal = motor.humanController(((-gamepad1.left_stick_y)-(-gamepad1.right_stick_y))/2);
 
         if(gamepad1.right_bumper) {
             y *= SLOW_MULTIPLIER;
