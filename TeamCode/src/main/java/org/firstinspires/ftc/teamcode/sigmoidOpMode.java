@@ -29,6 +29,8 @@
 
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.hardware.rev.RevBlinkinLedDriver;
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -38,62 +40,105 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.util.Motors;
+import org.firstinspires.ftc.teamcode.util.PropertiesLoader;
+import org.firstinspires.ftc.teamcode.util.SigmoidMotor;
 
 
-@TeleOp(name="Sigmoid Opmode", group="Linear Opmode")
+@Autonomous(name="Sigmoid")
 //@Disabled
 public class sigmoidOpMode extends LinearOpMode {
 
     // Declare OpMode members.
     private ElapsedTime runtime = new ElapsedTime();
-    private DcMotorEx freeMotor = null;
+    private DcMotor freeMotor = null;
     private DcMotor extensionMotor = null;
+
+    private double loop;
+
+    private PropertiesLoader loader = new PropertiesLoader("Sigmoid");
+    private final double ACCELERATION = loader.getDoubleProperty("acceleration");
+    private final double DISTANCE = loader.getDoubleProperty("distance");
+
+    //from closed, negative is out
+    //all the way extended is -6230
+    //all the way in is 0.
+    //OUT IS NEGATIVE.
 
     @Override
     public void runOpMode() {
         telemetry.addData("Status", "Initialized");
         telemetry.update();
 
-        freeMotor = (DcMotorEx) hardwareMap.get(DcMotor.class, "m");
-        extensionMotor = hardwareMap.get(DcMotor.class,"e");
+        freeMotor = hardwareMap.get(DcMotor.class, "m");
+        extensionMotor = hardwareMap.get(DcMotor.class, "e");
 
         freeMotor.setDirection(DcMotor.Direction.FORWARD);
         extensionMotor.setDirection(DcMotor.Direction.FORWARD);
 
-        freeMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        freeMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        SigmoidMotor sigmoidTest = new SigmoidMotor(freeMotor, ACCELERATION);
 
         extensionMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         extensionMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        Motors sigmoidTest = new Motors(freeMotor, 2);
+        AutonomousStep mode = AutonomousStep.START;
         loop = 0;
 
         waitForStart();
         runtime.reset();
 
-        while (opModeIsActive()) {
+        while(mode != AutonomousStep.END && opModeIsActive()){
+
+            switch(mode) {
+                case START:
+                    mode = mode.next();
+                    sigmoidTest.start(DISTANCE);
+                    break;
+                case FREE_MOTOR_20_ROTATIONS:
+                    sigmoidTest.setVelocity(time);
+
+                    if(sigmoidTest.isDone())mode = mode.next();
+                    break;
+            }
+
+            if(mode == AutonomousStep.START ) startTime = time;
+            if(mode == AutonomousStep.END) endTime = time;
 
             loop++;
-            startTime = time;
 
-            if(gamepad1.a) sigmoidTest.start(time, 5000);
-            sigmoidTest.setSigmoidSpeed(time);
+            telemetry.addData("Mode: ", mode.toString());
+            telemetry.addData("Stage: ", sigmoidTest.getCurrentStage());
+            telemetry.addData("Velocity:",sigmoidTest.velocity);
+            telemetry.addData("Remaining Distance: ",sigmoidTest.remainingDistance());
+            telemetry.addData("Proportional: ",sigmoidTest.decellerationError.getProportionalError());
+            telemetry.addData("Integral: ",sigmoidTest.decellerationError.getIntegralError());
+            telemetry.addData("Derivative: ",sigmoidTest.decellerationError.getDerivativeError());
+            telemetry.update();
+        }
 
-            endTime = time;
-
-            telemetry.addData("Sigmoid Power", sigmoidTest.getSigmoidSpeed(time));
-            telemetry.addData("Remaining Encoders", sigmoidTest.getRemainingDistanceEncoder(time));
-            telemetry.addData("Remaining Sigmoid", sigmoidTest.getRemainingDistanceSigmoid(time));
-            telemetry.addLine("");
-            telemetry.addData("Time (ms)", time);
-            telemetry.addData("Time of previous loop (ms)", startTime - endTime);
-            telemetry.addData("Average time per loop (ms)", loop/time);
+        while(opModeIsActive()){
+            telemetry.addData("Remaining Distance: ",sigmoidTest.remainingDistance());
             telemetry.update();
         }
     }
 
+    //0.54984, 0.55135, and 0.54991 seconds per revolution
+    //1.81870, 1.81374, and 0.81871 revolutions per second
+
     private double startTime;
     private double endTime;
-    private double loop;
+    public enum AutonomousStep{
+        START,
+        FREE_MOTOR_20_ROTATIONS,
+        END;
+
+        private static AutonomousStep[] steps = values();
+
+        public AutonomousStep next()
+        {
+            return steps[(this.ordinal() + 1) % steps.length];
+        }
+        public AutonomousStep previous() { return steps[(this.ordinal() - 1) < 0 ? steps.length - 1 : this.ordinal() - 1]; }
+    }
+
+
 }

@@ -1,6 +1,6 @@
 package org.firstinspires.ftc.teamcode.util;
 
-import org.firstinspires.ftc.teamcode.PIDAngleControl;
+import org.firstinspires.ftc.teamcode.PID;
 
 import static java.lang.Math.PI;
 import static java.lang.Math.abs;
@@ -89,7 +89,7 @@ public class CrunchyAutonomous extends Crunchy
         double[] position = getIMUPosition();
         double desiredAngle = turnAngle + position[0];
 
-        PIDAngleControl pidControl = new PIDAngleControl();
+        PID pidControl = new PID();
         if(PID_ENABLED)
         {
             pidControl.startPID();
@@ -117,9 +117,9 @@ public class CrunchyAutonomous extends Crunchy
                 double turnVal = pidControl.getValue(kP, kI, kD, PID_MULT);
                 turnVal = max(abs(turnVal), PID_MIN_POWER) * signum(turnVal);
                 opMode.telemetry.addData("konstants", kP + " " + kI + " " + kD + " " + PID_MULT);
-                opMode.telemetry.addData("error", pidControl.getError());
-                opMode.telemetry.addData("integral", pidControl.getIntegral());
-                opMode.telemetry.addData("derivative", pidControl.getDerivative());
+                opMode.telemetry.addData("error", pidControl.getProportionalError());
+                opMode.telemetry.addData("integral", pidControl.getIntegralError());
+                opMode.telemetry.addData("derivative", pidControl.getDerivativeError());
                 opMode.telemetry.addData("turn", turnVal);
                 opMode.telemetry.update();
                 drive(-turnVal, turnVal);

@@ -1,1 +1,2 @@
-adb push "*.properties" /sdcard/DWAIConfig
+@echo off
+for %%i in (*.properties) do adb push %%i /sdcard/DWAIConfig

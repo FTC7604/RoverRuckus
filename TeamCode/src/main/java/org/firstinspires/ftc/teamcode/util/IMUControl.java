@@ -4,7 +4,7 @@ import com.qualcomm.robotcore.util.ReadWriteFile;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.internal.system.AppUtil;
-import org.firstinspires.ftc.teamcode.PIDAngleControl;
+import org.firstinspires.ftc.teamcode.PID;
 
 import java.io.File;
 import static java.lang.Math.*;
@@ -12,7 +12,7 @@ import static java.lang.Math.*;
 public class IMUControl {
 
     private Telemetry telemetry;
-    private PIDAngleControl PIDControl = new PIDAngleControl();
+    private PID PIDControl = new PID();
 
     private double positiveAngle(double angle) {
         /*All that this method does is convert this angle to something between 0 and 2PI, I don't want the robot to keep spinning around and I wouldn't be able to
