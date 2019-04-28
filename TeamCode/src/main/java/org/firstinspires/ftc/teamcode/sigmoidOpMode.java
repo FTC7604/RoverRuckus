@@ -55,9 +55,9 @@ public class sigmoidOpMode extends LinearOpMode {
 
     private double loop;
 
-    private PropertiesLoader loader = new PropertiesLoader("Sigmoid");
-    private final double ACCELERATION = loader.getDoubleProperty("acceleration");
-    private final double DISTANCE = loader.getDoubleProperty("distance");
+    //private PropertiesLoader loader = new PropertiesLoader("Sigmoid");
+    private final double ACCELERATION = 2; //loader.getDoubleProperty("acceleration");
+    private final double DISTANCE = 1000; //loader.getDoubleProperty("distance");
 
     //from closed, negative is out
     //all the way extended is -6230
